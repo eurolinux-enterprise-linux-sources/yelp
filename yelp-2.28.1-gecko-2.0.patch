@@ -1,0 +1,203 @@
+diff -up yelp-2.28.1/m4/gecko.m4.gecko-2.0 yelp-2.28.1/m4/gecko.m4
+--- yelp-2.28.1/m4/gecko.m4.gecko-2.0	2009-11-19 18:09:56.000000000 +0100
++++ yelp-2.28.1/m4/gecko.m4	2012-01-20 09:42:19.108738176 +0100
+@@ -219,8 +219,6 @@ AC_RUN_IFELSE(
+ 		  #include <string.h>
+ 		  #include <stdlib.h>
+                   int main(void) {
+-		    if (strcmp (MOZ_DEFAULT_TOOLKIT, "gtk2") == 0 ||
+-		        strcmp (MOZ_DEFAULT_TOOLKIT, "cairo-gtk2") == 0)
+ 			    return EXIT_SUCCESS;
+ 		
+ 		    return EXIT_FAILURE;
+@@ -344,10 +342,8 @@ if test "$gecko_cv_gecko_version_int" -g
+ 	AC_DEFINE([HAVE_GECKO_1_8_1],[1],[Define if we have gecko 1.8.1])
+ 	gecko_cv_have_gecko_1_8_1=yes
+ fi
+-if test "$gecko_cv_gecko_version_int" -ge "1009000"; then
+-	AC_DEFINE([HAVE_GECKO_1_9],[1],[Define if we have gecko 1.9])
+-	gecko_cv_have_gecko_1_9=yes
+-fi
++AC_DEFINE([HAVE_GECKO_1_9],[1],[Define if we have gecko 1.9])
++gecko_cv_have_gecko_1_9=yes
+ 
+ if test "${gecko_cv_gecko}" = "libxul-embedding" -o "${gecko_cv_gecko}" = "libxul"; then
+ 	PKG_CHECK_EXISTS([${gecko_cv_gecko} >= 1.9.1],[gecko_cv_have_gecko_1_9_1=yes gecko_cv_gecko_version="1.9.1" gecko_cv_gecko_version_int=1009001],[gecko_cv_have_gecko_1_9_1=no])
+diff -up yelp-2.28.1/src/Makefile.am.gecko-2.0 yelp-2.28.1/src/Makefile.am
+--- yelp-2.28.1/src/Makefile.am.gecko-2.0	2009-11-19 18:09:56.000000000 +0100
++++ yelp-2.28.1/src/Makefile.am	2012-01-20 09:42:19.108738176 +0100
+@@ -111,6 +111,7 @@ yelp_SOURCES += \
+ 	$(NULL)
+ yelp_CFLAGS += $(SMCLIENT_CFLAGS)
+ yelp_LDADD += $(SMCLIENT_LIBS)
++yelp_LDADD += -ldl
+ 
+ if WITH_SMCLIENT_XSMP
+ yelp_SOURCES += eggsmclient-xsmp.c
+diff -up yelp-2.28.1/src/yelp-gecko-services.cpp.gecko-2.0 yelp-2.28.1/src/yelp-gecko-services.cpp
+--- yelp-2.28.1/src/yelp-gecko-services.cpp.gecko-2.0	2009-11-19 18:09:56.000000000 +0100
++++ yelp-2.28.1/src/yelp-gecko-services.cpp	2012-01-19 14:50:47.000000000 +0100
+@@ -32,7 +32,7 @@
+ #include <nsIComponentManager.h>
+ #include <nsComponentManagerUtils.h>
+ #include <nsIComponentRegistrar.h>
+-#include <nsIGenericFactory.h>
++#include <mozilla/ModuleUtils.h>
+ #include <nsILocalFile.h>
+ #include <nsIPrintSettings.h>
+ #include <nsServiceManagerUtils.h>
+@@ -46,6 +46,7 @@
+ #include "yelp-gecko-services.h"
+ 
+ /* Implementation file */
++/*
+ NS_IMPL_ISUPPORTS3(GPrintingPromptService, nsIPrintingPromptService, nsIWebProgressListener, nsIPrintProgressParams)
+ 
+   GPrintingPromptService::GPrintingPromptService()
+@@ -61,64 +62,64 @@ GPrintingPromptService::~GPrintingPrompt
+     }
+ }
+ 
+-/* void showPrintDialog (in nsIDOMWindow parent, in nsIWebBrowserPrint webBrowserPrint, in nsIPrintSettings printSettings); */
++// void showPrintDialog (in nsIDOMWindow parent, in nsIWebBrowserPrint webBrowserPrint, in nsIPrintSettings printSettings);
+ NS_IMETHODIMP GPrintingPromptService::ShowPrintDialog(nsIDOMWindow *parent, nsIWebBrowserPrint *webBrowserPrint, nsIPrintSettings *printSettings)
+ {
+   return NS_OK;
+   
+ }
+ 
+-/* void showProgress (in nsIDOMWindow parent, in nsIWebBrowserPrint webBrowserPrint, in nsIPrintSettings printSettings, in nsIObserver openDialogObserver, in boolean isForPrinting, out nsIWebProgressListener webProgressListener, out nsIPrintProgressParams printProgressParams, out boolean notifyOnOpen); */
++// void showProgress (in nsIDOMWindow parent, in nsIWebBrowserPrint webBrowserPrint, in nsIPrintSettings printSettings, in nsIObserver openDialogObserver, in boolean isForPrinting, out nsIWebProgressListener webProgressListener, out nsIPrintProgressParams printProgressParams, out boolean notifyOnOpen); 
+ NS_IMETHODIMP GPrintingPromptService::ShowProgress(nsIDOMWindow *parent, nsIWebBrowserPrint *webBrowserPrint, nsIPrintSettings *printSettings, nsIObserver *openDialogObserver, PRBool isForPrinting, nsIWebProgressListener **webProgressListener, nsIPrintProgressParams **printProgressParams, PRBool *notifyOnOpen)
+ {
+   return NS_OK;
+ }
+ 
+-/* void showPageSetup (in nsIDOMWindow parent, in nsIPrintSettings printSettings, in nsIObserver printObserver); */
++// void showPageSetup (in nsIDOMWindow parent, in nsIPrintSettings printSettings, in nsIObserver printObserver); 
+ NS_IMETHODIMP GPrintingPromptService::ShowPageSetup(nsIDOMWindow *parent, nsIPrintSettings *printSettings, 
+ 						    nsIObserver *printObserver)
+ {
+   return NS_OK;
+ }
+ 
+-/* void showPrinterProperties (in nsIDOMWindow parent, in wstring printerName, in nsIPrintSettings printSettings); */
++// void showPrinterProperties (in nsIDOMWindow parent, in wstring printerName, in nsIPrintSettings printSettings); 
+ NS_IMETHODIMP GPrintingPromptService::ShowPrinterProperties(nsIDOMWindow *parent, const PRUnichar *printerName, nsIPrintSettings *printSettings)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+ 
+-/* void onStateChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in unsigned long aStateFlags, in nsresult aStatus); */
++// void onStateChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in unsigned long aStateFlags, in nsresult aStatus); 
+ NS_IMETHODIMP GPrintingPromptService::OnStateChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, PRUint32 aStateFlags, nsresult aStatus)
+ {
+   return NS_OK;
+ }
+ 
+-/* void onProgressChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in long aCurSelfProgress, in long aMaxSelfProgress, in long aCurTotalProgress, in long aMaxTotalProgress); */
++// void onProgressChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in long aCurSelfProgress, in long aMaxSelfProgress, in long aCurTotalProgress, in long aMaxTotalProgress); 
+ NS_IMETHODIMP GPrintingPromptService::OnProgressChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, PRInt32 aCurSelfProgress, PRInt32 aMaxSelfProgress, PRInt32 aCurTotalProgress, PRInt32 aMaxTotalProgress)
+ {
+   return NS_OK;
+ }
+ 
+-/* void onLocationChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in nsIURI location); */
++// void onLocationChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in nsIURI location); 
+ NS_IMETHODIMP GPrintingPromptService::OnLocationChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, nsIURI *location)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+-/* void onStatusChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in nsresult aStatus, in wstring aMessage); */
++// void onStatusChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in nsresult aStatus, in wstring aMessage);
+ NS_IMETHODIMP GPrintingPromptService::OnStatusChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, nsresult aStatus, const PRUnichar *aMessage)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+-/* void onSecurityChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in unsigned long state); */
++// void onSecurityChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in unsigned long state); 
+ NS_IMETHODIMP GPrintingPromptService::OnSecurityChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, PRUint32 state)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+-/* attribute wstring docTitle; */
++// attribute wstring docTitle; 
+ NS_IMETHODIMP GPrintingPromptService::GetDocTitle(PRUnichar * *aDocTitle)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+@@ -128,7 +129,7 @@ NS_IMETHODIMP GPrintingPromptService::Se
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+ 
+-/* attribute wstring docURL; */
++// attribute wstring docURL; 
+ NS_IMETHODIMP GPrintingPromptService::GetDocURL(PRUnichar * *aDocURL)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+@@ -137,7 +138,7 @@ NS_IMETHODIMP GPrintingPromptService::Se
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+-
++*/
+ NS_IMPL_ISUPPORTS1(PrintListener, nsIWebProgressListener)
+ 
+   PrintListener::PrintListener (YelpPrintInfo *in, nsIWebBrowserPrint *p)
+@@ -418,8 +419,8 @@ PrintListener::SetPrintSettings (YelpPri
+ 
+ /* component registration */
+ 
+-NS_GENERIC_FACTORY_CONSTRUCTOR(GPrintingPromptService)
+-
++//NS_GENERIC_FACTORY_CONSTRUCTOR(GPrintingPromptService)
++/*
+ static const nsModuleComponentInfo sAppComps[] = {
+     {
+         G_PRINTINGPROMPTSERVICE_CLASSNAME,
+@@ -428,10 +429,11 @@ static const nsModuleComponentInfo sAppC
+         GPrintingPromptServiceConstructor
+     },
+ };
+-
++*/
+ void
+ yelp_register_printing ()
+ {
++/*
+   nsresult rv;
+   nsCOMPtr<nsIComponentRegistrar> cr;
+   rv = NS_GetComponentRegistrar(getter_AddRefs(cr));
+@@ -460,5 +462,5 @@ yelp_register_printing ()
+     {
+       g_warning ("Failed to register %s\n", sAppComps[0].mDescription);
+     }
+-    
++  */  
+ }
+diff -up yelp-2.28.1/src/yelp-gecko-utils.cpp.gecko-2.0 yelp-2.28.1/src/yelp-gecko-utils.cpp
+--- yelp-2.28.1/src/yelp-gecko-utils.cpp.gecko-2.0	2009-11-19 18:09:56.000000000 +0100
++++ yelp-2.28.1/src/yelp-gecko-utils.cpp	2012-01-20 09:42:19.109738173 +0100
+@@ -212,14 +212,11 @@ yelp_gecko_init (void)
+ 
+ 	nsresult rv;
+ #ifdef XPCOM_GLUE
+-    static const GREVersionRange greVersion = {
+-    "1.9a", PR_TRUE,
+-    "2", PR_TRUE
+-    };
+-    char xpcomLocation[PATH_MAX];
+-    rv = GRE_GetGREPathWithProperties(&greVersion, 1, nsnull, 0, xpcomLocation, sizeof (xpcomLocation));
+-    NS_ENSURE_SUCCESS (rv, FALSE);
+-
++#if defined(__x86_64__) || defined(__ia64__) || defined(__s390x__) || defined(__powerpc64__)
++    char xpcomLocation[PATH_MAX] = "/usr/lib64/xulrunner-2/libxpcom.so";
++#else
++    char xpcomLocation[PATH_MAX] = "/usr/lib/xulrunner-2/libxpcom.so";
++#endif
+     // Startup the XPCOM Glue that links us up with XPCOM.
+     rv = XPCOMGlueStartup(xpcomLocation);
+     NS_ENSURE_SUCCESS (rv, FALSE);

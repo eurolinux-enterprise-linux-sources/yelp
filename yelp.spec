@@ -12,7 +12,7 @@
 %define libxslt_version 1.1.4
 %define startup_notification_version 0.8
 %define rarian_version 0.7.0
-%define gecko_version 1.9.2
+%define gecko_version 10.0
 
 %define pango_version 1.0.99
 %define desktop_file_utils_version 0.3-7
@@ -20,7 +20,7 @@
 Summary: Help browser for the GNOME desktop
 Name: yelp
 Version: 2.28.1
-Release: 8%{?dist}
+Release: 13%{?dist}
 Source: http://download.gnome.org/sources/yelp/2.28/%{name}-%{version}.tar.bz2
 URL: http://live.gnome.org/Yelp
 Patch1: yelp-2.15.5-fedora-docs.patch
@@ -46,6 +46,8 @@ Patch15: yelp-xulrunner-fix.patch
 
 # https://bugzilla.redhat.com/show_bug.cgi?id=575674
 Patch16: yelp-2.28.1-el6-translation-updates.patch
+
+Patch17: yelp-2.28.1-gecko-2.0.patch
 
 License: GPLv2+
 Group: Applications/System
@@ -104,6 +106,7 @@ documentation written in DocBook.
 %patch14 -p1 -b .dir-prefix
 %patch15 -p1 -b .xulrunner-fix
 %patch16 -p1 -b .el6-translation-updates
+%patch17 -p1 -b .gecko-2.0
 
 # force regeneration
 rm data/yelp.schemas
@@ -111,6 +114,8 @@ rm data/yelp.schemas
 autoreconf -i -f -i
 
 %build
+CFLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing"
+CXXFLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing -fpermissive"
 %configure 			\
 	--with-mozilla=libxul-embedding	\
 	--disable-schemas-install
@@ -174,6 +179,13 @@ update-desktop-database &> /dev/null ||:
 %{_datadir}/yelp
 
 %changelog
+* Sun Jan 29 2012 Jan Horak <jhorak@redhat.com> - 2.28.1-13
+- Rebuild against newer gecko
+- Fixed gecko-2.0 patch
+
+* Mon Sep 26 2011 Martin Stransky <stransky@redhatcom> 2.28.1-10
+- Rebuild against newer gecko
+
 * Fri Aug 27 2010 Jan Horak <jhorak@redhat.com> - 2.28.1-8
 - Rebuild against newer gecko
 
