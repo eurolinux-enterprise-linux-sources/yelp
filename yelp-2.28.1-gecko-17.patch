@@ -1,0 +1,69 @@
+diff -up yelp-2.28.1.old/src/Yelper.cpp.old yelp-2.28.1.old/src/Yelper.cpp
+--- yelp-2.28.1.old/src/Yelper.cpp.old	2012-11-01 15:08:50.027372409 +0100
++++ yelp-2.28.1.old/src/Yelper.cpp	2012-11-01 15:40:31.156403791 +0100
+@@ -123,10 +123,10 @@ Yelper::Init ()
+ void
+ Yelper::Destroy ()
+ {
+-	mEmbed = nsnull;
+-	mWebBrowser = nsnull;
+-	mDOMWindow = nsnull;
+-	mFinder = nsnull;
++	mEmbed = nullptr;
++	mWebBrowser = nullptr;
++	mDOMWindow = nullptr;
++	mFinder = nullptr;
+ 
+ 	mInitialised = PR_FALSE;
+ }
+@@ -139,7 +139,7 @@ Yelper::DoCommand (const char *aCommand)
+ 	nsCOMPtr<nsICommandManager> cmdManager (do_GetInterface (mWebBrowser));
+ 	if (!cmdManager) return;
+ 
+-	cmdManager->DoCommand (aCommand, nsnull, nsnull);
++	cmdManager->DoCommand (aCommand, nullptr, nullptr);
+ }
+ 
+ void
+@@ -265,7 +265,7 @@ Yelper::ProcessMouseEvent (void* aEvent)
+ 	/* Mozilla uses 2 as its right mouse button code */
+ 	if (button != 2) return;
+ 
+-	nsCOMPtr<nsIDOMNSEvent> nsEvent (do_QueryInterface (event));
++	nsCOMPtr<nsIDOMEvent> nsEvent (do_QueryInterface (event));
+ 	if (!nsEvent) return;
+ 
+ 	nsresult rv;
+@@ -306,7 +306,7 @@ Yelper::Print (YelpPrintInfo *print_info
+   if (!preview)
+     rv = print->Print (settings, listener);
+   else {
+-    rv = print->PrintPreview (settings, mDOMWindow, nsnull);
++    rv = print->PrintPreview (settings, mDOMWindow, nullptr);
+     rv |= print->GetPrintPreviewNumPages (prev_pages);
+   }
+   return rv;
+diff -up yelp-2.28.1.old/src/yelp-gecko-services.cpp.old yelp-2.28.1.old/src/yelp-gecko-services.cpp
+--- yelp-2.28.1.old/src/yelp-gecko-services.cpp.old	2012-11-01 16:10:42.000000000 +0100
++++ yelp-2.28.1.old/src/yelp-gecko-services.cpp	2012-11-01 16:08:25.321515517 +0100
+@@ -182,7 +182,7 @@ NS_IMETHODIMP PrintListener::OnProgressC
+ }
+ 
+ /* void onLocationChange (in nsIWebProgress aWebProgress, in nsIRequest aRequest, in nsIURI location); */
+-NS_IMETHODIMP PrintListener::OnLocationChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, nsIURI *location)
++NS_IMETHODIMP PrintListener::OnLocationChange(nsIWebProgress *aWebProgress, nsIRequest *aRequest, nsIURI *location, uint32_t aFlags)
+ {
+   return NS_ERROR_NOT_IMPLEMENTED;
+ }
+diff -up yelp-2.28.1.old/src/yelp-gecko-utils.cpp.old yelp-2.28.1.old/src/yelp-gecko-utils.cpp
+--- yelp-2.28.1.old/src/yelp-gecko-utils.cpp.old	2012-11-01 16:13:55.000000000 +0100
++++ yelp-2.28.1.old/src/yelp-gecko-utils.cpp	2012-11-01 15:44:47.883934549 +0100
+@@ -258,7 +258,7 @@ extern "C" void
+ yelp_gecko_shutdown (void)
+ {
+ 	NS_IF_RELEASE (gPrefBranch);
+-	gPrefBranch = nsnull;
++	gPrefBranch = nullptr;
+ 
+ 	gtk_moz_embed_pop_startup ();
+ 

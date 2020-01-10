@@ -12,7 +12,7 @@
 %define libxslt_version 1.1.4
 %define startup_notification_version 0.8
 %define rarian_version 0.7.0
-%define gecko_version 10.0
+%define gecko_version 17.0
 
 %define pango_version 1.0.99
 %define desktop_file_utils_version 0.3-7
@@ -20,7 +20,7 @@
 Summary: Help browser for the GNOME desktop
 Name: yelp
 Version: 2.28.1
-Release: 13%{?dist}
+Release: 17%{?dist}
 Source: http://download.gnome.org/sources/yelp/2.28/%{name}-%{version}.tar.bz2
 URL: http://live.gnome.org/Yelp
 Patch1: yelp-2.15.5-fedora-docs.patch
@@ -48,6 +48,9 @@ Patch15: yelp-xulrunner-fix.patch
 Patch16: yelp-2.28.1-el6-translation-updates.patch
 
 Patch17: yelp-2.28.1-gecko-2.0.patch
+Patch18: yelp-2.28.1-gecko-17.patch
+Patch20: yelp-2.28.1-gecko-17-mozmemory.patch
+Patch21: yelp-2.28.1-gecko-17-nomozmemory.patch
 
 License: GPLv2+
 Group: Applications/System
@@ -107,7 +110,16 @@ documentation written in DocBook.
 %patch15 -p1 -b .xulrunner-fix
 %patch16 -p1 -b .el6-translation-updates
 %patch17 -p1 -b .gecko-2.0
+%patch18 -p1 -b .gecko-17
 
+# s390(x) and ppc(64) xulrunner is not build with mozilla's jemalloc. In this case we can't use -lmemory 
+# while linking yelp binary.
+%ifarch s390 s390x ppc ppc64
+%patch21 -p1 -b .nomozmemory
+%else
+# rest of arches are linked with -lmemory
+%patch20 -p1 -b .mozmemory
+%endif
 # force regeneration
 rm data/yelp.schemas
 
@@ -116,6 +128,7 @@ autoreconf -i -f -i
 %build
 CFLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing"
 CXXFLAGS="$RPM_OPT_FLAGS -fno-strict-aliasing -fpermissive"
+LDFLAGS=""
 %configure 			\
 	--with-mozilla=libxul-embedding	\
 	--disable-schemas-install
@@ -179,6 +192,12 @@ update-desktop-database &> /dev/null ||:
 %{_datadir}/yelp
 
 %changelog
+* Thu Jan 10 2013 Jan Horak <jhorak@redhat.com> - 2.28.1-17
+- Rebuild against gecko 17.0.2
+
+* Thu Nov  1 2012 Martin Stransky <stransky@redhatcom> 2.28.1-15
+- Build fixes for gecko 17
+
 * Sun Jan 29 2012 Jan Horak <jhorak@redhat.com> - 2.28.1-13
 - Rebuild against newer gecko
 - Fixed gecko-2.0 patch

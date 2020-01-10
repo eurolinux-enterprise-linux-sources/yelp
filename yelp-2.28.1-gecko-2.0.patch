@@ -23,17 +23,6 @@ diff -up yelp-2.28.1/m4/gecko.m4.gecko-2.0 yelp-2.28.1/m4/gecko.m4
  
  if test "${gecko_cv_gecko}" = "libxul-embedding" -o "${gecko_cv_gecko}" = "libxul"; then
  	PKG_CHECK_EXISTS([${gecko_cv_gecko} >= 1.9.1],[gecko_cv_have_gecko_1_9_1=yes gecko_cv_gecko_version="1.9.1" gecko_cv_gecko_version_int=1009001],[gecko_cv_have_gecko_1_9_1=no])
-diff -up yelp-2.28.1/src/Makefile.am.gecko-2.0 yelp-2.28.1/src/Makefile.am
---- yelp-2.28.1/src/Makefile.am.gecko-2.0	2009-11-19 18:09:56.000000000 +0100
-+++ yelp-2.28.1/src/Makefile.am	2012-01-20 09:42:19.108738176 +0100
-@@ -111,6 +111,7 @@ yelp_SOURCES += \
- 	$(NULL)
- yelp_CFLAGS += $(SMCLIENT_CFLAGS)
- yelp_LDADD += $(SMCLIENT_LIBS)
-+yelp_LDADD += -ldl
- 
- if WITH_SMCLIENT_XSMP
- yelp_SOURCES += eggsmclient-xsmp.c
 diff -up yelp-2.28.1/src/yelp-gecko-services.cpp.gecko-2.0 yelp-2.28.1/src/yelp-gecko-services.cpp
 --- yelp-2.28.1/src/yelp-gecko-services.cpp.gecko-2.0	2009-11-19 18:09:56.000000000 +0100
 +++ yelp-2.28.1/src/yelp-gecko-services.cpp	2012-01-19 14:50:47.000000000 +0100
@@ -194,9 +183,9 @@ diff -up yelp-2.28.1/src/yelp-gecko-utils.cpp.gecko-2.0 yelp-2.28.1/src/yelp-gec
 -    NS_ENSURE_SUCCESS (rv, FALSE);
 -
 +#if defined(__x86_64__) || defined(__ia64__) || defined(__s390x__) || defined(__powerpc64__)
-+    char xpcomLocation[PATH_MAX] = "/usr/lib64/xulrunner-2/libxpcom.so";
++    char xpcomLocation[PATH_MAX] = "/usr/lib64/xulrunner/libxpcom.so";
 +#else
-+    char xpcomLocation[PATH_MAX] = "/usr/lib/xulrunner-2/libxpcom.so";
++    char xpcomLocation[PATH_MAX] = "/usr/lib/xulrunner/libxpcom.so";
 +#endif
      // Startup the XPCOM Glue that links us up with XPCOM.
      rv = XPCOMGlueStartup(xpcomLocation);
