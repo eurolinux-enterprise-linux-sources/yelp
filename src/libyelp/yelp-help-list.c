@@ -29,14 +29,13 @@
 #include <libxml/parser.h>
 #include <libxml/xinclude.h>
 #include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
 
 #include "yelp-help-list.h"
 #include "yelp-settings.h"
 
 typedef struct _HelpListEntry HelpListEntry;
 
-static void           yelp_help_list_class_init      (YelpHelpListClass     *klass);
-static void           yelp_help_list_init            (YelpHelpList          *list);
 static void           yelp_help_list_dispose         (GObject               *object);
 static void           yelp_help_list_finalize        (GObject               *object);
 
@@ -85,7 +84,7 @@ help_list_entry_cmp (HelpListEntry *a, HelpListEntry *b)
     return g_utf8_collate (as, bs);
 }
 
-G_DEFINE_TYPE (YelpHelpList, yelp_help_list, YELP_TYPE_DOCUMENT);
+G_DEFINE_TYPE (YelpHelpList, yelp_help_list, YELP_TYPE_DOCUMENT)
 #define GET_PRIV(object) (G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_HELP_LIST, YelpHelpListPrivate))
 
 typedef struct _YelpHelpListPrivate  YelpHelpListPrivate;
@@ -129,15 +128,15 @@ yelp_help_list_init (YelpHelpList *list)
                                            g_free,
                                            (GDestroyNotify) help_list_entry_free);
 
-    priv->get_docbook_title = xmlXPathCompile ("normalize-space("
+    priv->get_docbook_title = xmlXPathCompile (BAD_CAST "normalize-space("
                                                "( /*/title | /*/db:title"
                                                "| /*/articleinfo/title"
                                                "| /*/bookinfo/title"
                                                "| /*/db:info/db:title"
                                                ")[1])");
-    priv->get_mallard_title = xmlXPathCompile ("normalize-space((/mal:page/mal:info/mal:title[@type='text'] |"
+    priv->get_mallard_title = xmlXPathCompile (BAD_CAST "normalize-space((/mal:page/mal:info/mal:title[@type='text'] |"
                                                "                 /mal:page/mal:title)[1])");
-    priv->get_mallard_desc = xmlXPathCompile ("normalize-space(/mal:page/mal:info/mal:desc[1])");
+    priv->get_mallard_desc = xmlXPathCompile (BAD_CAST "normalize-space(/mal:page/mal:info/mal:desc[1])");
 
     yelp_document_set_page_id ((YelpDocument *) list, NULL, "index");
     yelp_document_set_page_id ((YelpDocument *) list, "index", "index");
@@ -224,7 +223,7 @@ help_list_think (YelpHelpList *list)
     YelpHelpListPrivate *priv = GET_PRIV (list);
     /* The strings are still owned by GLib; we just own the array. */
     gchar **datadirs;
-    gint datadir_i, subdir_i, lang_i;
+    gint datadir_i, lang_i;
     GList *cur;
     GtkIconTheme *theme;
 
@@ -247,7 +246,7 @@ help_list_think (YelpHelpList *list)
             g_free (helpdirname);
             continue;
         }
-        while (child = g_file_enumerator_next_file (children, NULL, NULL)) {
+        while ((child = g_file_enumerator_next_file (children, NULL, NULL))) {
             gchar *docid;
             HelpListEntry *entry = NULL;
 
@@ -324,7 +323,7 @@ help_list_think (YelpHelpList *list)
                 g_free (langdirname);
                 continue;
             }
-            while (child = g_file_enumerator_next_file (children, NULL, NULL)) {
+            while ((child = g_file_enumerator_next_file (children, NULL, NULL))) {
                 gchar *docid, *filename;
                 HelpListEntry *entry = NULL;
                 if (g_file_info_get_file_type (child) != G_FILE_TYPE_DIRECTORY) {
@@ -446,7 +445,7 @@ help_list_handle_page (YelpHelpList *list,
     YelpHelpListPrivate *priv = GET_PRIV (list);
     GtkTextDirection direction = gtk_widget_get_default_direction ();
     GString *string = g_string_new
-        ("<html><head><style type='text/css'>\n"
+        ("<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><style type='text/css'>\n"
          "html { height: 100%; }\n"
          "body { margin: 0; padding: 0; max-width: 100%;");
     colors = yelp_settings_get_colors (yelp_settings_get_default ());
@@ -561,7 +560,7 @@ help_list_handle_page (YelpHelpList *list,
     for (cur = priv->all_entries; cur != NULL; cur = cur->next) {
         HelpListEntry *entry = (HelpListEntry *) cur->data;
         gchar *title = entry->title ? entry->title : (strchr (entry->id, ':') + 1);
-        gchar *desc = entry->desc ? entry->desc : "";
+        const gchar *desc = entry->desc ? entry->desc : "";
 
         tmp = g_markup_printf_escaped ("<a href='%s'><div class='linkdiv'>",
                                        entry->id);
@@ -592,7 +591,7 @@ help_list_handle_page (YelpHelpList *list,
 
     yelp_document_give_contents (YELP_DOCUMENT (list), page_id,
                                  string->str,
-                                 "text/html");
+                                 "application/xhtml+xml");
     g_strfreev (colors);
     g_string_free (string, FALSE);
     yelp_document_signal (YELP_DOCUMENT (list), page_id,
@@ -629,7 +628,7 @@ help_list_process_docbook (YelpHelpList  *list,
     obj = xmlXPathCompiledEval (priv->get_docbook_title, xpath);
     if (obj) {
         if (obj->stringval)
-            entry->title = g_strdup (obj->stringval);
+            entry->title = g_strdup ((const gchar *) obj->stringval);
         xmlXPathFreeObject (obj);
     }
 
@@ -669,14 +668,14 @@ help_list_process_mallard (YelpHelpList  *list,
     obj = xmlXPathCompiledEval (priv->get_mallard_title, xpath);
     if (obj) {
         if (obj->stringval)
-            entry->title = g_strdup (obj->stringval);
+            entry->title = g_strdup ((const gchar *) obj->stringval);
         xmlXPathFreeObject (obj);
     }
 
     obj = xmlXPathCompiledEval (priv->get_mallard_desc, xpath);
     if (obj) {
         if (obj->stringval)
-            entry->desc = g_strdup (obj->stringval);
+            entry->desc = g_strdup ((const gchar *) obj->stringval);
         xmlXPathFreeObject (obj);
     }
 

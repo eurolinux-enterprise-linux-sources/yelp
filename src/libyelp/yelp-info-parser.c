@@ -31,25 +31,25 @@
 #include "yelp-debug.h"
 
 
-GtkTreeIter *         find_real_top                      (GtkTreeModel *model, 
+static GtkTreeIter *  find_real_top                      (GtkTreeModel *model, 
 							  GtkTreeIter *it);
-GtkTreeIter *         find_real_sibling                  (GtkTreeModel *model,
+static GtkTreeIter *  find_real_sibling                  (GtkTreeModel *model,
 							  GtkTreeIter *it, 
 							  GtkTreeIter *comp);
-xmlNodePtr            yelp_info_parse_menu               (GtkTreeStore *tree,
+static xmlNodePtr     yelp_info_parse_menu               (GtkTreeStore *tree,
 							  xmlNodePtr *node,
 							  gchar *page_content,
 							  gboolean notes);
-gboolean              get_menuoptions                    (gchar *line, 
+static gboolean       get_menuoptions                    (gchar *line, 
 							  gchar **title, 
 							  gchar **ref, 
 							  gchar **desc, 
 							  gchar **xref);
-gboolean              resolve_frag_id                    (GtkTreeModel *model, 
+static gboolean       resolve_frag_id                    (GtkTreeModel *model, 
 							  GtkTreePath *path, 
 							  GtkTreeIter *iter,
 							  gpointer data);
-void   		      info_process_text_notes            (xmlNodePtr *node, 
+static void	      info_process_text_notes            (xmlNodePtr *node, 
 							  gchar *content,
 							  GtkTreeStore
 							  *tree);
@@ -115,6 +115,10 @@ info_image_get_attributes (gchar const* string)
 static xmlNodePtr
 info_insert_image (xmlNodePtr parent, GMatchInfo *match_info)
 {
+  gchar *title;
+  gchar *text;
+  gchar *alt;
+  xmlNodePtr img;
   GHashTable *h = info_image_get_attributes (g_match_info_fetch (match_info, 1));
   gchar *source;
   if (h)
@@ -124,11 +128,11 @@ info_insert_image (xmlNodePtr parent, GMatchInfo *match_info)
     return xmlNewTextChild (parent, NULL, BAD_CAST "para",
                             BAD_CAST "[broken image]");
 
-  gchar *title = (gchar*)g_hash_table_lookup (h, "title");
-  gchar *text = (gchar*)g_hash_table_lookup (h, "text");
-  gchar *alt = (gchar*)g_hash_table_lookup (h, "alt");
+  title = (gchar*)g_hash_table_lookup (h, "title");
+  text = (gchar*)g_hash_table_lookup (h, "text");
+  alt = (gchar*)g_hash_table_lookup (h, "alt");
   g_hash_table_destroy (h);
-  xmlNodePtr img = xmlNewChild (parent, NULL, BAD_CAST "img", NULL);
+  img = xmlNewChild (parent, NULL, BAD_CAST "img", NULL);
   xmlNewProp (img, BAD_CAST "src", BAD_CAST source);
   xmlNewProp (img, BAD_CAST "title", BAD_CAST (title ? title : ""));
   xmlNewProp (img, BAD_CAST "text", BAD_CAST (text ? text : ""));
@@ -179,12 +183,15 @@ static gchar*
 join_strings_subset (const gchar *separator,
                      gchar** strings, gchar** end)
 {
+  gchar *ptr;
+  gchar *glob;
+
   g_assert(end > strings);
 
-  gchar *ptr = *end;
+  ptr = *end;
   *end = NULL;
   
-  gchar *glob = g_strjoinv (separator, strings);
+  glob = g_strjoinv (separator, strings);
   *end = ptr;
   return glob;
 }
@@ -304,6 +311,11 @@ info_body_text (xmlNodePtr parent, xmlNodePtr *paragraph, xmlNsPtr ns,
                 gboolean inline_p, gchar const *content)
 {
   xmlNodePtr thepara = NULL;
+  gint content_len;
+  gint pos;
+  GRegex *regex;
+  GMatchInfo *match_info;
+  gchar *after;
   if (paragraph == NULL) paragraph = &thepara;
 
   if (!strstr (content, INFO_C_IMAGE_TAG_OPEN)) {
@@ -311,10 +323,9 @@ info_body_text (xmlNodePtr parent, xmlNodePtr *paragraph, xmlNsPtr ns,
     return;
   }
 
-  gint content_len = strlen (content);
-  gint pos = 0;
-  GRegex *regex = g_regex_new ("(" INFO_C_IMAGE_TAG_OPEN_RE "((?:[^" INFO_TAG_1 "]|[^" INFO_C_TAG_0 "]+" INFO_TAG_1 ")*)" INFO_C_TAG_CLOSE_RE ")", 0, 0, NULL);
-  GMatchInfo *match_info;
+  content_len = strlen (content);
+  pos = 0;
+  regex = g_regex_new ("(" INFO_C_IMAGE_TAG_OPEN_RE "((?:[^" INFO_TAG_1 "]|[^" INFO_C_TAG_0 "]+" INFO_TAG_1 ")*)" INFO_C_TAG_CLOSE_RE ")", 0, 0, NULL);
 
   g_regex_match (regex, content, 0, &match_info);
   while (g_match_info_matches (match_info))
@@ -335,7 +346,7 @@ info_body_text (xmlNodePtr parent, xmlNodePtr *paragraph, xmlNsPtr ns,
 	info_insert_image (parent, match_info);
       g_match_info_next (match_info, NULL);
     }
-  gchar *after = g_strndup (&content[pos], content_len - pos);
+  after = g_strndup (&content[pos], content_len - pos);
   info_body_parse_text (parent, paragraph, NULL, TRUE, after);
   g_free (after);
 }
@@ -376,7 +387,7 @@ static char
     gssize bytes;
     GString *string;
     gchar *str;
-    int i;
+    gsize i;
 
     gfile = g_file_new_for_path (file);
     file_stream = g_file_read (gfile, NULL, NULL);
@@ -459,8 +470,8 @@ static char
 		char *filename;
 		char *str;
 		char **pages;
-		int offset;
-		int plength;
+		gsize offset;
+		gsize plength;
 
 		debug_print (DB_DEBUG, "Line: %s\n", *ptr);
 		items = g_strsplit (*ptr, ": ", 2);
@@ -481,7 +492,7 @@ static char
 		  		continue;
 			}
 
-			offset =  atoi(items[1]);
+			offset = (gsize) atoi (items[1]);
 			plength = strlen(pages[1]);
 			
 			debug_print (DB_DEBUG, "Need to make string %s+%i bytes = %i\n",
@@ -1153,7 +1164,7 @@ first_non_space (gchar* str)
   return str;
 }
 
-xmlNodePtr
+static xmlNodePtr
 yelp_info_parse_menu (GtkTreeStore *tree, xmlNodePtr *node, 
 		      gchar *page_content, gboolean notes)
 {
@@ -1334,7 +1345,7 @@ info_process_text_notes (xmlNodePtr *node, gchar *content, GtkTreeStore *tree)
   notes = g_regex_split_simple ("\\*[Nn]ote(?!_)", content, 0, 0);
 
   for (current = notes; *current != NULL; current++) {
-    gchar *url, **urls, **ulink;
+    gchar *url, **urls;
     gchar *append;
     gchar *alt_append, *alt_append1;
     gchar *link_text;

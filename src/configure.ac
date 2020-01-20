@@ -1,30 +1,28 @@
 AC_PREREQ([2.63])
-AC_INIT([Yelp],[3.14.2],[http://bugzilla.gnome.org/enter_bug.cgi?product=yelp],[yelp])
+AC_INIT([Yelp],[3.22.0],[http://bugzilla.gnome.org/enter_bug.cgi?product=yelp],[yelp])
 
+AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_SRCDIR([src/yelp.c])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
 
-AM_INIT_AUTOMAKE([1.11 dist-bzip2 no-dist-gzip tar-ustar])
+AM_INIT_AUTOMAKE([1.11.2 dist-xz no-dist-gzip subdir-objects tar-ustar])
 AM_MAINTAINER_MODE([enable])
 
 AM_SILENT_RULES([yes])
 
+AX_IS_RELEASE([git-directory])
+AX_CHECK_ENABLE_DEBUG([info], [YELP_DEBUG], [$ax_is_release])
+
+AX_COMPILER_FLAGS([], [], [$ax_is_release])
 # Check for programs
 AC_PROG_CC
 AC_PROG_CC_C_O
 AC_PROG_LN_S
-
-# Initialize libtool
-LT_PREREQ([2.2.6])
-LT_INIT
-
-AC_PATH_PROGS(SED, gsed sed)
-
-AM_PATH_GLIB_2_0
 GLIB_GSETTINGS
 
 # Library dependecies
+LT_LIB_M
 PKG_CHECK_MODULES(YELP,
 [
 	gio-2.0 >= 2.38.0
@@ -35,31 +33,23 @@ PKG_CHECK_MODULES(YELP,
 	libxslt >= 1.1.4
 	libexslt >= 0.8.1
 	sqlite3
-	webkitgtk-3.0 >= 1.3.10
+	webkit2gtk-4.0 >= 2.7.1
 	yelp-xsl >= 3.12.0
 ])
 AC_SUBST([YELP_CFLAGS])
 AC_SUBST([YELP_LIBS])
 
 
-GNOME_DEBUG_CHECK
-GNOME_COMPILE_WARNINGS([maximum])
-GNOME_MAINTAINER_MODE_DEFINES
+# Initialize libtool
+LT_PREREQ([2.2.6])
+LT_INIT
 
-MORE_WARN_FLAGS=
-
-if test "x$enable_debug" = "xyes"; then
-	AC_DEFINE([YELP_DEBUG],[1],[Enable Yelp debugging])
-	AM_CFLAGS="$AM_CFLAGS -pedantic -ansi"
-fi
-
-dnl NOTE : it appears that some systems do not like it when you use line
-dnl        continuation charactes to split CFLAGS into readable chunks
-if test "x$GCC" = "xyes"; then
-   AM_CFLAGS="$AM_CFLAGS -Wall -Wno-uninitialized -Wmissing-prototypes -Wnested-externs -Wpointer-arith -Wno-sign-compare"
-fi
+PKG_CHECK_MODULES([YELP_EXTENSION], [webkit2gtk-web-extension-4.0 >= 2.7.2])
+AC_SUBST(YELP_EXTENSION_CFLAGS)
+AC_SUBST(YELP_EXTENSION_LIBS)
 
 # i18n stuff
+AX_REQUIRE_DEFINED([IT_PROG_INTLTOOL])
 IT_PROG_INTLTOOL([0.41.0])
 
 ALL_LINGUAS="`grep -v '^#' "$srcdir/po/LINGUAS" | tr '\n' ' '`"
@@ -158,85 +148,20 @@ GLIB_GENMARSHAL="`$PKG_CONFIG --variable=glib_genmarshal glib-2.0`"
 AC_SUBST(GLIB_GENMARSHAL)
 
 
-# Set flags
-AM_CPPFLAGS="$AM_CPPFLAGS $DEPRECATION_FLAGS"
-AM_CFLAGS="$AM_CFLAGS $WARN_CFLAGS $MORE_WARN_FLAGS"
-
-
-AC_SUBST([AM_CPPFLAGS])
-AC_SUBST([AM_CFLAGS])
-AC_SUBST([AM_LDFLAGS])
-
+AX_REQUIRE_DEFINED([GTK_DOC_CHECK])
 GTK_DOC_CHECK([1.13],[--flavour no-tmpl])
 
 AC_CONFIG_FILES([
 Makefile
-docs/Makefile
 docs/libyelp/Makefile
 docs/libyelp/version.xml
-libyelp/Makefile
-src/Makefile
-data/Makefile
-data/domains/Makefile
-data/dtd/Makefile
 data/dtd/catalog
-data/icons/Makefile
-data/icons/hicolor/Makefile
-data/icons/hicolor/16x16/Makefile
-data/icons/hicolor/16x16/status/Makefile
-data/icons/hicolor/scalable/Makefile
-data/icons/hicolor/scalable/actions/Makefile
-data/icons/hicolor/scalable/status/Makefile
-data/mathjax/Makefile
-data/mathjax/config/Makefile
-data/mathjax/extensions/HTML-CSS/Makefile
-data/mathjax/extensions/Makefile
-data/mathjax/fonts/HTML-CSS/TeX/woff/Makefile
-data/mathjax/jax/Makefile
-data/mathjax/jax/element/Makefile
-data/mathjax/jax/element/mml/Makefile
-data/mathjax/jax/element/mml/optable/Makefile
-data/mathjax/jax/input/Makefile
-data/mathjax/jax/input/MathML/Makefile
-data/mathjax/jax/input/MathML/entities/Makefile
-data/mathjax/jax/output/HTML-CSS/Makefile
-data/mathjax/jax/output/HTML-CSS/autoload/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/AMS/Regular/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Caligraphic/Bold/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Caligraphic/Regular/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Fraktur/Bold/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Fraktur/Regular/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Greek/Bold/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Greek/BoldItalic/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Greek/Italic/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Greek/Regular/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Main/Bold/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Main/Italic/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Main/Regular/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Math/BoldItalic/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Math/Italic/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/SansSerif/Bold/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/SansSerif/Italic/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/SansSerif/Regular/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Script/Regular/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Size1/Regular/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Size2/Regular/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Size3/Regular/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Size4/Regular/Makefile
-data/mathjax/jax/output/HTML-CSS/fonts/TeX/Typewriter/Regular/Makefile
-data/mathjax/jax/output/Makefile
-data/mathjax/jax/output/NativeMML/Makefile
-data/mathjax/unpacked/Makefile
-data/xslt/Makefile
 data/xslt/db2html.xsl
 data/xslt/info2html.xsl
 data/xslt/mal2html.xsl
 data/xslt/man2html.xsl
 data/xslt/yelp-common.xsl
 po/Makefile.in
-tests/Makefile
 yelp.desktop.in
 ])
 

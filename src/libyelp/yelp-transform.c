@@ -44,8 +44,6 @@
 
 #define YELP_NAMESPACE "http://www.gnome.org/yelp/ns"
 
-static void      yelp_transform_init         (YelpTransform           *transform);
-static void      yelp_transform_class_init   (YelpTransformClass      *klass);
 static void      yelp_transform_dispose      (GObject                 *object);
 static void      yelp_transform_finalize     (GObject                 *object);
 static void      yelp_transform_get_property (GObject                 *object,
@@ -58,9 +56,6 @@ static void      yelp_transform_set_property (GObject                 *object,
                                               GParamSpec              *pspec);
 
 static void      transform_run              (YelpTransform           *transform);
-static gboolean  transform_free             (YelpTransform           *transform);
-static void      transform_set_error        (YelpTransform           *transform,
-                                             YelpError               *error);
 
 static gboolean  transform_chunk            (YelpTransform           *transform);
 static gboolean  transform_error            (YelpTransform           *transform);
@@ -90,7 +85,7 @@ enum {
 };
 static gint signals[LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (YelpTransform, yelp_transform, G_TYPE_OBJECT);
+G_DEFINE_TYPE (YelpTransform, yelp_transform, G_TYPE_OBJECT)
 #define GET_PRIV(object)(G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_TRANSFORM, YelpTransformPrivate))
 
 typedef struct _YelpTransformPrivate YelpTransformPrivate;
@@ -123,7 +118,7 @@ static void
 yelp_transform_init (YelpTransform *transform)
 {
     YelpTransformPrivate *priv = GET_PRIV (transform);
-    priv->queue = g_async_queue_new ();
+    priv->queue = g_async_queue_new_full (g_free);
     priv->chunks = g_hash_table_new_full (g_str_hash,
                                           g_str_equal,
                                           g_free,
@@ -133,9 +128,9 @@ yelp_transform_init (YelpTransform *transform)
 static void
 yelp_transform_class_init (YelpTransformClass *klass)
 {
-    exsltRegisterAll ();
-
     GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+    exsltRegisterAll ();
 
     object_class->dispose = yelp_transform_dispose;
     object_class->finalize = yelp_transform_finalize;
@@ -182,9 +177,6 @@ yelp_transform_dispose (GObject *object)
     debug_print (DB_FUNCTION, "entering\n");
 
     if (priv->queue) {
-        gchar *chunk_id;
-        while ((chunk_id = (gchar *) g_async_queue_try_pop (priv->queue)))
-            g_free (chunk_id);
         g_async_queue_unref (priv->queue);
         priv->queue = NULL;
     }
@@ -222,7 +214,6 @@ static void
 yelp_transform_finalize (GObject *object)
 {
     YelpTransformPrivate *priv = GET_PRIV (object);
-    xsltDocumentPtr xsltdoc;
     GHashTableIter iter;
     gpointer chunk;
 

@@ -56,11 +56,9 @@ struct _YelpSimpleDocumentPriv {
 
 #define BUFFER_SIZE 4096
 
-G_DEFINE_TYPE (YelpSimpleDocument, yelp_simple_document, YELP_TYPE_DOCUMENT);
+G_DEFINE_TYPE (YelpSimpleDocument, yelp_simple_document, YELP_TYPE_DOCUMENT)
 #define GET_PRIV(object) (G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_SIMPLE_DOCUMENT, YelpSimpleDocumentPriv))
 
-static void           yelp_simple_document_class_init  (YelpSimpleDocumentClass *klass);
-static void           yelp_simple_document_init        (YelpSimpleDocument      *document);
 static void           yelp_simple_document_dispose     (GObject                 *object);
 static void           yelp_simple_document_finalize    (GObject                 *object);
 
@@ -166,14 +164,10 @@ YelpDocument *
 yelp_simple_document_new (YelpUri *uri)
 {
     YelpSimpleDocument *document;
-    gchar *doc_uri;
 
-    doc_uri = yelp_uri_get_document_uri (uri);
     document = (YelpSimpleDocument *) g_object_new (YELP_TYPE_SIMPLE_DOCUMENT,
-                                                    "document-uri", doc_uri,
+                                                    "document-uri", uri,
                                                     NULL);
-    g_free (doc_uri);
-
     document->priv->file = yelp_uri_get_file (uri);
     document->priv->page_id = yelp_uri_get_page_id (uri);
 
@@ -411,8 +405,6 @@ stream_close_cb (GInputStream       *stream,
 		 GAsyncResult       *result,
 		 YelpSimpleDocument *document)
 {
-    GSList *cur;
-
     document->priv->finished = TRUE;
     document_signal_all (document);
 }

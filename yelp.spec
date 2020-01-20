@@ -1,37 +1,36 @@
 %global _changelog_trimtime %(date +%s -d "1 year ago")
 
-Summary: Help browser for the GNOME desktop
-Name: yelp
-Epoch: 1
-Version: 3.14.2
-Release: 1%{?dist}
-#VCS: git:git://git.gnome.org/yelp
-Source: http://download.gnome.org/sources/yelp/3.14/%{name}-%{version}.tar.xz
+Name:          yelp
+Epoch:         1
+Version:       3.22.0
+Release:       1%{?dist}
+Summary:       Help browser for the GNOME desktop
+
+Group:         Applications/System
+License:       GPLv2+
+URL:           https://wiki.gnome.org/Apps/Yelp
+#VCS:          git:git://git.gnome.org/yelp
+Source:        https://download.gnome.org/sources/%{name}/3.22/%{name}-%{version}.tar.xz
 
 # https://bugzilla.gnome.org/show_bug.cgi?id=687960
-Patch1: 0001-Center-new-windows.patch
+Patch1:        0001-Center-new-windows.patch
 
-URL: http://live.gnome.org/Yelp
-License: GPLv2+
-Group: Applications/System
-Requires: yelp-libs%{?_isa} = %{epoch}:%{version}-%{release}
-Requires: yelp-xsl
-
-Requires(post):   desktop-file-utils
-Requires(postun): desktop-file-utils
-
-BuildRequires: gtk3-devel >= 3.0.0
-BuildRequires: libxml2-devel >= 2.6.5
-BuildRequires: libxslt-devel >= 1.1.4
-BuildRequires: webkitgtk3-devel
+BuildRequires: pkgconfig(gtk+-3.0)
+BuildRequires: pkgconfig(liblzma)
+BuildRequires: pkgconfig(libxml-2.0)
+BuildRequires: pkgconfig(libexslt)
+BuildRequires: pkgconfig(libxslt)
+BuildRequires: pkgconfig(sqlite3)
+BuildRequires: pkgconfig(webkit2gtk-4.0)
+BuildRequires: pkgconfig(yelp-xsl)
 BuildRequires: desktop-file-utils
-BuildRequires: yelp-xsl-devel >= 3.0.1
-BuildRequires: xz-devel
 BuildRequires: bzip2-devel
 BuildRequires: gettext-devel
 BuildRequires: intltool
-BuildRequires: sqlite-devel
 BuildRequires: itstool
+Requires:      yelp-libs%{?_isa} = %{epoch}:%{version}-%{release}
+Requires:      yelp-xsl
+
 
 %description
 Yelp is the help browser for the GNOME desktop. It is designed
@@ -67,12 +66,52 @@ the libraries in the yelp-libs package.
 # libtool doesn't make this easy, so we do it the hard way
 sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0 /g' -e 's/    if test "$export_dynamic" = yes && test -n "$export_dynamic_flag_spec"; then/      func_append compile_command " -Wl,-O1,--as-needed"\n      func_append finalize_command " -Wl,-O1,--as-needed"\n\0/' libtool
 
-make %{?_smp_mflags}
+make %{?_smp_mflags} V=1
 
 %install
-make install DESTDIR=$RPM_BUILD_ROOT
+%make_install
 
-rm $RPM_BUILD_ROOT%{_libdir}/libyelp.la
+# Register as an application to be visible in the software center
+#
+# NOTE: It would be *awesome* if this file was maintained by the upstream
+# project, translated and installed into the right place during `make install`.
+#
+# See http://www.freedesktop.org/software/appstream/docs/ for more details.
+#
+mkdir -p $RPM_BUILD_ROOT%{_datadir}/appdata
+cat > $RPM_BUILD_ROOT%{_datadir}/appdata/%{name}.appdata.xml <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Copyright 2014 Richard Hughes <richard@hughsie.com> -->
+<!--
+BugReportURL: https://bugzilla.gnome.org/show_bug.cgi?id=722763
+SentUpstream: 2014-09-17
+-->
+<application>
+  <id type="desktop">yelp.desktop</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <description>
+    <p>
+      Yelp is a viewer and framework for documentation on the Linux desktop.
+      It is used heavily by the GNOME desktop environment, and its tools serve as
+      the reference implementation for the Mallard help format.
+      Yelp supports DocBook, Mallard, HTML, man, and info documents.
+    </p>
+    <p>
+      Yelp development has led to the development of various tools, and the Mallard
+      and DocBook transformations live in standalone XSLT module.
+      All of these are under the umbrella name Yelp.
+    </p>
+  </description>
+  <screenshots>
+    <screenshot type="default">https://raw.githubusercontent.com/hughsie/fedora-appstream/master/screenshots-extra/yelp/a.png</screenshot>
+    <screenshot>https://raw.githubusercontent.com/hughsie/fedora-appstream/master/screenshots-extra/yelp/b.png</screenshot>
+  </screenshots>
+  <url type="homepage">https://projects.gnome.org/yelp/</url>
+  <updatecontact>gnome-doc-devel-list@gnome.org</updatecontact>
+</application>
+EOF
+
+find $RPM_BUILD_ROOT%{_libdir} -name '*.la' -delete
 
 %find_lang %{name}
 
@@ -100,8 +139,10 @@ gtk-update-icon-cache %{_datadir}icons/hicolor &> /dev/null || :
 %postun libs -p /sbin/ldconfig
 
 %files -f %{name}.lang
-%doc AUTHORS COPYING MAINTAINERS NEWS README
+%doc AUTHORS NEWS README
+%license COPYING
 %{_bindir}/*
+%{_datadir}/appdata/%{name}.appdata.xml
 %{_datadir}/applications/yelp.desktop
 %{_datadir}/yelp
 %{_datadir}/glib-2.0/schemas/org.gnome.yelp.gschema.xml
@@ -109,14 +150,19 @@ gtk-update-icon-cache %{_datadir}icons/hicolor &> /dev/null || :
 
 %files libs
 %{_libdir}/libyelp.so.*
+%{_libdir}/yelp/web-extensions/libyelpwebextension.so
 
 %files devel
 %{_libdir}/libyelp.so
 %{_includedir}/libyelp
-%{_datadir}/gtk-doc/html/libyelp
+%{_datadir}/gtk-doc
 
 
 %changelog
+* Tue Mar  7 2017 Matthias Clasen <mclasen@redhat.com> - 1:3.22.0-1
+- Rebase to 3.22.0
+  Resolves: rhbz#1387062
+
 * Mon May 18 2015 David King <dking@redhat.com> - 1:3.14.2-1
 - Update to 3.14.2 (#1174713)
 

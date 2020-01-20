@@ -37,8 +37,6 @@
 #include "yelp-application.h"
 #include "yelp-window.h"
 
-static void          yelp_window_init             (YelpWindow         *window);
-static void          yelp_window_class_init       (YelpWindowClass    *klass);
 static void          yelp_window_dispose          (GObject            *object);
 static void          yelp_window_finalize         (GObject            *object);
 static void          yelp_window_get_property     (GObject            *object,
@@ -124,6 +122,9 @@ static void          view_new_window              (YelpView           *view,
                                                    YelpWindow         *window);
 static void          view_loaded                  (YelpView           *view,
                                                    YelpWindow         *window);
+static void          view_is_loading_changed      (YelpView           *view,
+                                                   GParamSpec         *pspec,
+                                                   YelpWindow         *window);
 static void          view_uri_selected            (YelpView           *view,
                                                    GParamSpec         *pspec,
                                                    YelpWindow         *window);
@@ -146,9 +147,11 @@ enum {
     LAST_SIGNAL
 };
 
+#define MAX_FIND_MATCHES 1000
+
 static guint signals[LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (YelpWindow, yelp_window, GTK_TYPE_APPLICATION_WINDOW);
+G_DEFINE_TYPE (YelpWindow, yelp_window, GTK_TYPE_APPLICATION_WINDOW)
 #define GET_PRIV(object)(G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_WINDOW, YelpWindowPrivate))
 
 typedef struct _YelpWindowPrivate YelpWindowPrivate;
@@ -181,6 +184,8 @@ struct _YelpWindowPrivate {
     gint height;
 
     gboolean configured;
+
+    gboolean use_header;
 };
 
 static void
@@ -285,13 +290,13 @@ yelp_window_set_property (GObject     *object,
 static void
 window_construct (YelpWindow *window)
 {
-    GtkWidget *scroll;
     GtkWidget *box, *button;
     GtkWidget *frame;
     GtkCssProvider *css;
     GtkSizeGroup *size_group;
     GMenu *menu, *section;
     YelpWindowPrivate *priv = GET_PRIV (window);
+    GtkStyleContext *headerbar_context;
 
     const GActionEntry entries[] = {
         { "yelp-window-new",    action_new_window,   NULL, NULL, NULL },
@@ -303,6 +308,11 @@ window_construct (YelpWindow *window)
     };
 
     gtk_window_set_icon_name (GTK_WINDOW (window), "help-browser");
+
+    g_object_get (gtk_settings_get_default (),
+                  "gtk-dialogs-use-header", &priv->use_header,
+                  NULL);
+
     priv->view = (YelpView *) yelp_view_new ();
 
     g_action_map_add_action_entries (G_ACTION_MAP (window),
@@ -313,8 +323,16 @@ window_construct (YelpWindow *window)
     gtk_container_add (GTK_CONTAINER (window), priv->vbox_full);
 
     priv->header = gtk_header_bar_new ();
-    gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (priv->header), TRUE);
-    gtk_window_set_titlebar (GTK_WINDOW (window), priv->header);
+    if (priv->use_header) {
+        gtk_header_bar_set_show_close_button (GTK_HEADER_BAR (priv->header), TRUE);
+        gtk_window_set_titlebar (GTK_WINDOW (window), priv->header);
+    } else {
+        headerbar_context = gtk_widget_get_style_context (GTK_WIDGET (priv->header));
+        gtk_container_add (GTK_CONTAINER (priv->vbox_full), GTK_WIDGET (priv->header));
+        gtk_style_context_remove_class (headerbar_context, "header-bar");
+        gtk_style_context_add_class (headerbar_context, GTK_STYLE_CLASS_TOOLBAR);
+        gtk_style_context_add_class (headerbar_context, GTK_STYLE_CLASS_PRIMARY_TOOLBAR);
+    }
 
     /** Back/Forward **/
     box = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 0);
@@ -394,7 +412,7 @@ window_construct (YelpWindow *window)
     gtk_widget_set_valign (button, GTK_ALIGN_CENTER);
     gtk_style_context_add_class (gtk_widget_get_style_context (button), "image-button");
     gtk_button_set_image (GTK_BUTTON (button),
-                          gtk_image_new_from_icon_name ("yelp-bookmark-remove-symbolic",
+                          gtk_image_new_from_icon_name ("user-bookmarks-symbolic",
                                                         GTK_ICON_SIZE_MENU));
     gtk_widget_set_tooltip_text (button, _("Bookmarks"));
     gtk_header_bar_pack_end (GTK_HEADER_BAR (priv->header), button);
@@ -500,22 +518,17 @@ window_construct (YelpWindow *window)
     box = gtk_overlay_new ();
     gtk_overlay_add_overlay (GTK_OVERLAY (box), GTK_WIDGET (priv->find_bar));
 
-    scroll = gtk_scrolled_window_new (NULL, NULL);
-    g_object_set (scroll, "width-request", 420, NULL);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroll),
-                                    GTK_POLICY_AUTOMATIC,
-                                    GTK_POLICY_AUTOMATIC);
-    gtk_container_add (GTK_CONTAINER (box), scroll);
+    gtk_container_add (GTK_CONTAINER (box), GTK_WIDGET (priv->view));
     gtk_box_pack_start (GTK_BOX (priv->vbox_view), box, TRUE, TRUE, 0);
 
     g_signal_connect (priv->view, "new-view-requested", G_CALLBACK (view_new_window), window);
     g_signal_connect (priv->view, "loaded", G_CALLBACK (view_loaded), window);
+    g_signal_connect (priv->view, "notify::is-loading", G_CALLBACK (view_is_loading_changed), window);
     g_signal_connect (priv->view, "notify::yelp-uri", G_CALLBACK (view_uri_selected), window);
     g_signal_connect_swapped (priv->view, "notify::page-id",
                               G_CALLBACK (window_set_bookmark_buttons), window);
     window_set_bookmark_buttons (window);
     g_signal_connect (priv->view, "notify::root-title", G_CALLBACK (view_root_title), window);
-    gtk_container_add (GTK_CONTAINER (scroll), GTK_WIDGET (priv->view));
     gtk_widget_grab_focus (GTK_WIDGET (priv->view));
 
     gtk_drag_dest_set (GTK_WIDGET (window),
@@ -996,18 +1009,19 @@ find_entry_key_press (GtkEntry    *entry,
                       YelpWindow  *window)
 {
     YelpWindowPrivate *priv = GET_PRIV (window);
+    WebKitFindController *find_controller;
+
+    find_controller = webkit_web_view_get_find_controller (WEBKIT_WEB_VIEW (priv->view));
 
     if (event->keyval == GDK_KEY_Escape) {
         gtk_revealer_set_reveal_child (GTK_REVEALER (priv->find_bar), FALSE);
         gtk_widget_grab_focus (GTK_WIDGET (priv->view));
+        webkit_find_controller_search_finish (find_controller);
         return TRUE;
     }
 
     if (event->keyval == GDK_KEY_Return || event->keyval == GDK_KEY_KP_Enter) {
-        gchar *text = gtk_editable_get_chars (GTK_EDITABLE (entry), 0, -1);
-        webkit_web_view_search_text (WEBKIT_WEB_VIEW (priv->view),
-                                     text, FALSE, TRUE, TRUE);
-        g_free (text);
+        webkit_find_controller_search_next (find_controller);
         return TRUE;
     }
 
@@ -1019,23 +1033,16 @@ find_entry_changed (GtkEntry   *entry,
                     YelpWindow *window)
 {
     gchar *text;
-    gint count;
     YelpWindowPrivate *priv = GET_PRIV (window);
+    WebKitFindController *find_controller;
 
-    webkit_web_view_unmark_text_matches (WEBKIT_WEB_VIEW (priv->view));
+    find_controller = webkit_web_view_get_find_controller (WEBKIT_WEB_VIEW (priv->view));
 
     text = gtk_editable_get_chars (GTK_EDITABLE (entry), 0, -1);
 
-    count = webkit_web_view_mark_text_matches (WEBKIT_WEB_VIEW (priv->view),
-                                               text, FALSE, 0);
-    if (count > 0) {
-        webkit_web_view_set_highlight_text_matches (WEBKIT_WEB_VIEW (priv->view), TRUE);
-        webkit_web_view_search_text (WEBKIT_WEB_VIEW (priv->view),
-                                     text, FALSE, TRUE, TRUE);
-    }
-    else {
-        webkit_web_view_set_highlight_text_matches (WEBKIT_WEB_VIEW (priv->view), FALSE);
-    }
+    webkit_find_controller_search (find_controller, text,
+      WEBKIT_FIND_OPTIONS_WRAP_AROUND | WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE,
+      MAX_FIND_MATCHES);
 
     g_free (text);
 }
@@ -1045,10 +1052,10 @@ find_prev_clicked (GtkButton  *button,
                    YelpWindow *window)
 {
     YelpWindowPrivate *priv = GET_PRIV (window);
-    gchar *text = gtk_editable_get_chars (GTK_EDITABLE (priv->find_entry), 0, -1);
-    webkit_web_view_search_text (WEBKIT_WEB_VIEW (priv->view),
-                                 text, FALSE, FALSE, TRUE);
-    g_free (text);
+    WebKitFindController *find_controller;
+
+    find_controller = webkit_web_view_get_find_controller (WEBKIT_WEB_VIEW (priv->view));
+    webkit_find_controller_search_previous (find_controller);
 }
 
 static void
@@ -1056,10 +1063,10 @@ find_next_clicked (GtkButton  *button,
                    YelpWindow *window)
 {
     YelpWindowPrivate *priv = GET_PRIV (window);
-    gchar *text = gtk_editable_get_chars (GTK_EDITABLE (priv->find_entry), 0, -1);
-    webkit_web_view_search_text (WEBKIT_WEB_VIEW (priv->view),
-                                 text, FALSE, TRUE, TRUE);
-    g_free (text);
+    WebKitFindController *find_controller;
+
+    find_controller = webkit_web_view_get_find_controller (WEBKIT_WEB_VIEW (priv->view));
+    webkit_find_controller_search_next (find_controller);
 }
 
 static void
@@ -1079,7 +1086,6 @@ view_loaded (YelpView   *view,
     YelpUri *uri;
     gchar *doc_uri;
     YelpViewState state;
-    GdkWindow *gdkwin;
     YelpWindowPrivate *priv = GET_PRIV (window);
 
     g_object_get (view,
@@ -1087,10 +1093,6 @@ view_loaded (YelpView   *view,
                   "state", &state,
                   NULL);
     doc_uri = yelp_uri_get_document_uri (uri);
-
-    gdkwin = gtk_widget_get_window (GTK_WIDGET (window));
-    if (gdkwin != NULL)
-        gdk_window_set_cursor (gtk_widget_get_window (GTK_WIDGET (window)), NULL);
 
     if (state != YELP_VIEW_STATE_ERROR) {
         gchar *page_id, *icon, *title;
@@ -1117,24 +1119,37 @@ view_loaded (YelpView   *view,
 }
 
 static void
+view_is_loading_changed (YelpView   *view,
+                         GParamSpec *pspec,
+                         YelpWindow *window)
+{
+    GdkWindow *gdkwin;
+
+    gdkwin = gtk_widget_get_window (GTK_WIDGET (window));
+    if (!gdkwin)
+        return;
+
+    if (webkit_web_view_is_loading (WEBKIT_WEB_VIEW (view))) {
+        gdk_window_set_cursor (gdkwin,
+                               gdk_cursor_new_for_display (gdk_window_get_display (gdkwin),
+                                                           GDK_WATCH));
+    } else {
+        gdk_window_set_cursor (gtk_widget_get_window (GTK_WIDGET (window)), NULL);
+    }
+}
+
+static void
 view_uri_selected (YelpView     *view,
                    GParamSpec   *pspec,
                    YelpWindow   *window)
 {
     YelpUri *uri;
     gchar *doc_uri;
-    GdkWindow *gdkwin;
     YelpWindowPrivate *priv = GET_PRIV (window);
 
     g_object_get (G_OBJECT (view), "yelp-uri", &uri, NULL);
     if (uri == NULL)
         return;
-
-    gdkwin = gtk_widget_get_window (GTK_WIDGET (window));
-    if (gdkwin != NULL)
-        gdk_window_set_cursor (gdkwin,
-                               gdk_cursor_new_for_display (gdk_window_get_display (gdkwin),
-                                                           GDK_WATCH));
 
     doc_uri = yelp_uri_get_document_uri (uri);
     if (priv->doc_uri == NULL || !g_str_equal (priv->doc_uri, doc_uri)) {
@@ -1158,19 +1173,28 @@ view_root_title (YelpView    *view,
     gchar *root_title, *page_title;
     g_object_get (view, "root-title", &root_title, "page-title", &page_title, NULL);
 
-    if (page_title) {
-        gtk_header_bar_set_title (GTK_HEADER_BAR (priv->header), page_title);
-        g_free (page_title);
-    } else {
-        gtk_header_bar_set_title (GTK_HEADER_BAR (priv->header), _("Help"));
+    if (!priv->use_header) {
+        if (root_title)
+            gtk_window_set_title (GTK_WINDOW (window), root_title);
+        else
+            gtk_window_set_title (GTK_WINDOW (window), _("Help"));
+
+        goto out;
     }
 
-    if (root_title) {
+    if (page_title)
+        gtk_header_bar_set_title (GTK_HEADER_BAR (priv->header), page_title);
+    else
+        gtk_header_bar_set_title (GTK_HEADER_BAR (priv->header), _("Help"));
+
+    if (root_title && (page_title == NULL || strcmp (root_title, page_title)))
         gtk_header_bar_set_subtitle (GTK_HEADER_BAR (priv->header), root_title);
-        g_free (root_title);
-    } else {
+    else
         gtk_header_bar_set_subtitle (GTK_HEADER_BAR (priv->header), NULL);
-    }
+
+out:
+    g_free (root_title);
+    g_free (page_title);
 }
 
 static void

@@ -71,15 +71,12 @@ enum {
   PROP_EDITOR_MODE
 };
 
-gchar *icon_names[YELP_SETTINGS_NUM_ICONS];
+static const gchar *icon_names[YELP_SETTINGS_NUM_ICONS];
 
-G_DEFINE_TYPE (YelpSettings, yelp_settings, G_TYPE_OBJECT);
+G_DEFINE_TYPE (YelpSettings, yelp_settings, G_TYPE_OBJECT)
 #define GET_PRIV(object) (G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_SETTINGS, YelpSettingsPriv))
 
-static void           yelp_settings_class_init   (YelpSettingsClass    *klass);
-static void           yelp_settings_init         (YelpSettings         *settings);
 static void           yelp_settings_constructed  (GObject              *object);
-static void           yelp_settings_dispose      (GObject              *object);
 static void           yelp_settings_finalize     (GObject              *object);
 static void           yelp_settings_get_property (GObject              *object,
 						  guint                 prop_id,
@@ -119,7 +116,6 @@ yelp_settings_class_init (YelpSettingsClass *klass)
     gint i;
 
     object_class->constructed  = yelp_settings_constructed;
-    object_class->dispose  = yelp_settings_dispose;
     object_class->finalize = yelp_settings_finalize;
     object_class->get_property = yelp_settings_get_property;
     object_class->set_property = yelp_settings_set_property;
@@ -242,102 +238,218 @@ static void
 yelp_settings_constructed (GObject *object)
 {
     YelpSettings *settings = YELP_SETTINGS (object);
-    GDBusConnection *connection;
-    GVariant *ret, *names;
-    GVariant *ret2;
-    GVariantIter iter;
-    gchar *name;
-    gboolean env_shell, env_classic, env_panel, env_unity, env_xfce;
-    GError *error = NULL;
-
-    connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
-    if (connection == NULL) {
-        g_warning ("Unable to connect to dbus: %s", error->message);
-        g_error_free (error);
-        return;
-    }
-
-    ret = g_dbus_connection_call_sync (connection,
-                                       "org.freedesktop.DBus",
-                                       "/org/freedesktop/DBus",
-                                       "org.freedesktop.DBus",
-                                       "ListNames",
-                                       NULL,
-                                       G_VARIANT_TYPE ("(as)"),
-                                       G_DBUS_CALL_FLAGS_NONE,
-                                       -1, NULL, &error);
-    if (ret == NULL) {
-        g_warning ("Unable to query dbus: %s", error->message);
-        g_error_free (error);
-        return;
-    }
-    env_shell = env_classic = env_panel = env_unity = env_xfce = FALSE;
-    names = g_variant_get_child_value (ret, 0);
-    g_variant_iter_init (&iter, names);
-    while (g_variant_iter_loop (&iter, "&s", &name)) {
-        if (g_str_equal (name, "org.gnome.Panel"))
-            env_panel = TRUE;
-        else if (g_str_equal (name, "org.gnome.Shell"))
-            env_shell = TRUE;
-        else if (g_str_equal (name, "com.canonical.Unity"))
-            env_unity = TRUE;
-        else if (g_str_equal (name, "org.xfce.Panel"))
-            env_xfce = TRUE;
-    }
-    g_variant_unref (names);
-    g_variant_unref (ret);
-    if (env_shell) {
-        ret = g_dbus_connection_call_sync (connection,
-                                               "org.gnome.Shell",
-                                               "/org/gnome/Shell",
-                                               "org.freedesktop.DBus.Properties",
-                                               "Get",
-                                               g_variant_new ("(ss)",
-                                                              "org.gnome.Shell",
-                                                              "Mode"),
-                                               G_VARIANT_TYPE ("(v)"),
-                                               G_DBUS_CALL_FLAGS_NONE,
-                                               -1, NULL, &error);
-        if (ret == NULL) {
-            g_warning ("Failed to get GNOME shell mode: %s", error->message);
-            g_error_free (error);
-        } else {
-            GVariant *v;
-            g_variant_get (ret, "(v)", &v);
-            if (g_variant_is_of_type (v, G_VARIANT_TYPE_STRING) &&
-                g_str_equal (g_variant_get_string (v, NULL), "classic")) {
-                env_classic = TRUE;
-            }
-            g_variant_unref (v);
-            g_variant_unref (ret);
-        }
-    }
-
-    if (env_classic)
-        yelp_settings_set_if_token (settings, "platform:gnome-classic");
-
-    /* order is important:
-       gnome-shell also provides org.gnome.Panel
-       unity also provides org.gnome.Shell
-     */
-    if (env_unity)
-        yelp_settings_set_if_token (settings, "platform:unity");
-    else if (env_shell)
-        yelp_settings_set_if_token (settings, "platform:gnome-shell");
-    else if (env_xfce)
-        yelp_settings_set_if_token (settings, "platform:xfce");
-    else if (env_panel)
-        yelp_settings_set_if_token (settings, "platform:gnome-panel");
+    gboolean skip_dbus_checks = FALSE;
+    gchar *os_release = NULL;
+    const gchar *desktop;
 
     yelp_settings_set_if_token (settings, "action:install");
-}
 
-static void
-yelp_settings_dispose (GObject *object)
-{
-    YelpSettings *settings = YELP_SETTINGS (object);
+    g_file_get_contents ("/etc/os-release", &os_release, NULL, NULL);
+    if (os_release == NULL)
+        g_file_get_contents ("/usr/lib/os-release", &os_release, NULL, NULL);
 
-    G_OBJECT_CLASS (yelp_settings_parent_class)->dispose (object);
+    if (os_release != NULL) {
+        gint i;
+        gchar **lines = g_strsplit(os_release, "\n", -1);
+        gchar *osid = NULL, *osversion = NULL, *end;
+        g_free (os_release);
+
+        for (i = 0; lines[i] != NULL; i++) {
+            if (g_str_has_prefix (lines[i], "ID=")) {
+                if (lines[i][3] == '"') {
+                    end = strchr (lines[i] + 4, '"');
+                    if (end != NULL)
+                        osid = g_strndup (lines[i] + 4, end - lines[i] - 4);
+                }
+                else if (lines[i][3] == '\'') {
+                    end = strchr (lines[i] + 4, '\'');
+                    if (end != NULL)
+                        osid = g_strndup (lines[i] + 4, end - lines[i] - 4);
+                }
+                else {
+                    osid = g_strdup (lines[i] + 3);
+                }
+            }
+            else if (g_str_has_prefix (lines[i], "VERSION_ID=")) {
+                if (lines[i][11] == '"') {
+                    end = strchr (lines[i] + 12, '"');
+                    if (end != NULL)
+                        osversion = g_strndup (lines[i] + 12, end - lines[i] - 12);
+                }
+                else if (lines[i][11] == '\'') {
+                    end = strchr (lines[i] + 12, '\'');
+                    if (end != NULL)
+                        osversion = g_strndup (lines[i] + 12, end - lines[i] - 12);
+                }
+                else {
+                    osversion = g_strdup (lines[i] + 11);
+                }
+            }
+        }
+
+        if (osid) {
+            gchar *token = g_strconcat("platform:", osid, NULL);
+            yelp_settings_set_if_token (settings, token);
+            g_free (token);
+            if (osversion) {
+                token = g_strconcat("platform:", osid, "-", osversion, NULL);
+                yelp_settings_set_if_token (settings, token);
+                g_free (token);
+                g_free (osversion);
+            }
+            g_free (osid);
+        }
+
+        g_strfreev(lines);
+    }
+
+    desktop = g_getenv ("XDG_CURRENT_DESKTOP");
+    if (desktop != NULL) {
+        gchar **desktops = g_strsplit (desktop, ":", -1);
+        gint i;
+        gboolean xdg_gnome = FALSE, xdg_gnome_classic = FALSE;
+        for (i = 0; desktops[i]; i++) {
+            if (!g_ascii_strcasecmp (desktops[i], "gnome")) {
+                xdg_gnome = TRUE;
+            }
+            else if (!g_ascii_strcasecmp (desktops[i], "gnome-classic")) {
+                xdg_gnome_classic = TRUE;
+            }
+            else if (!g_ascii_strcasecmp (desktops[i], "kde")) {
+                yelp_settings_set_if_token (settings, "platform:kde");
+                skip_dbus_checks = TRUE;
+                break;
+            }
+            else if (!g_ascii_strcasecmp (desktops[i], "mate")) {
+                yelp_settings_set_if_token (settings, "platform:mate");
+                yelp_settings_set_if_token (settings, "platform:gnome-panel");
+                skip_dbus_checks = TRUE;
+                break;
+            }
+            else if (!g_ascii_strcasecmp (desktops[i], "pantheon")) {
+                yelp_settings_set_if_token (settings, "platform:pantheon");
+                yelp_settings_set_if_token (settings, "platform:gnome-shell");
+                skip_dbus_checks = TRUE;
+                break;
+            }
+            else if (!g_ascii_strcasecmp (desktops[i], "unity")) {
+                yelp_settings_set_if_token (settings, "platform:unity");
+                skip_dbus_checks = TRUE;
+                break;
+            }
+            else if (!g_ascii_strcasecmp (desktops[i], "x-cinnamon")) {
+                yelp_settings_set_if_token (settings, "platform:cinnamon");
+                yelp_settings_set_if_token (settings, "platform:gnome-shell");
+                skip_dbus_checks = TRUE;
+                break;
+            }
+            else if (!g_ascii_strcasecmp (desktops[i], "xfce")) {
+                yelp_settings_set_if_token (settings, "platform:xfce");
+                skip_dbus_checks = TRUE;
+                break;
+            }
+        }
+        if (xdg_gnome) {
+            yelp_settings_set_if_token (settings, "platform:gnome-shell");
+            if (!xdg_gnome_classic)
+                yelp_settings_set_if_token (settings, "platform:gnome-3");
+            skip_dbus_checks = TRUE;
+        }
+        if (xdg_gnome_classic) {
+            yelp_settings_set_if_token (settings, "platform:gnome-classic");
+            yelp_settings_set_if_token (settings, "platform:gnome-shell");
+            skip_dbus_checks = TRUE;
+        }
+        g_strfreev (desktops);
+    }
+
+    if (!skip_dbus_checks) {
+        GDBusConnection *connection;
+        GVariant *ret, *names;
+        GVariantIter iter;
+        gchar *name;
+        gboolean env_shell, env_classic, env_panel, env_unity, env_xfce;
+        GError *error = NULL;
+
+        connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
+        if (connection == NULL) {
+            g_warning ("Unable to connect to dbus: %s", error->message);
+            g_error_free (error);
+            return;
+        }
+
+        ret = g_dbus_connection_call_sync (connection,
+                                           "org.freedesktop.DBus",
+                                           "/org/freedesktop/DBus",
+                                           "org.freedesktop.DBus",
+                                           "ListNames",
+                                           NULL,
+                                           G_VARIANT_TYPE ("(as)"),
+                                           G_DBUS_CALL_FLAGS_NONE,
+                                           -1, NULL, &error);
+        if (ret == NULL) {
+            g_warning ("Unable to query dbus: %s", error->message);
+            g_error_free (error);
+            return;
+        }
+        env_shell = env_classic = env_panel = env_unity = env_xfce = FALSE;
+        names = g_variant_get_child_value (ret, 0);
+        g_variant_iter_init (&iter, names);
+        while (g_variant_iter_loop (&iter, "&s", &name)) {
+            if (g_str_equal (name, "org.gnome.Panel"))
+                env_panel = TRUE;
+            else if (g_str_equal (name, "org.gnome.Shell"))
+                env_shell = TRUE;
+            else if (g_str_equal (name, "com.canonical.Unity"))
+                env_unity = TRUE;
+            else if (g_str_equal (name, "org.xfce.Panel"))
+                env_xfce = TRUE;
+        }
+        g_variant_unref (names);
+        g_variant_unref (ret);
+        if (env_shell) {
+            ret = g_dbus_connection_call_sync (connection,
+                                                   "org.gnome.Shell",
+                                                   "/org/gnome/Shell",
+                                                   "org.freedesktop.DBus.Properties",
+                                                   "Get",
+                                                   g_variant_new ("(ss)",
+                                                                  "org.gnome.Shell",
+                                                                  "Mode"),
+                                                   G_VARIANT_TYPE ("(v)"),
+                                                   G_DBUS_CALL_FLAGS_NONE,
+                                                   -1, NULL, &error);
+            if (ret == NULL) {
+                g_warning ("Failed to get GNOME shell mode: %s", error->message);
+                g_error_free (error);
+            } else {
+                GVariant *v;
+                g_variant_get (ret, "(v)", &v);
+                if (g_variant_is_of_type (v, G_VARIANT_TYPE_STRING) &&
+                    g_str_equal (g_variant_get_string (v, NULL), "classic")) {
+                    env_classic = TRUE;
+                }
+                g_variant_unref (v);
+                g_variant_unref (ret);
+            }
+        }
+
+        if (env_classic)
+            yelp_settings_set_if_token (settings, "platform:gnome-classic");
+
+        /* order is important:
+           gnome-shell also provides org.gnome.Panel
+           unity also provides org.gnome.Shell
+         */
+        if (env_unity)
+            yelp_settings_set_if_token (settings, "platform:unity");
+        else if (env_shell)
+            yelp_settings_set_if_token (settings, "platform:gnome-shell");
+        else if (env_xfce)
+            yelp_settings_set_if_token (settings, "platform:xfce");
+        else if (env_panel)
+            yelp_settings_set_if_token (settings, "platform:gnome-panel");
+    }
 }
 
 static void
@@ -862,7 +974,7 @@ yelp_settings_get_all_params (YelpSettings *settings,
         g_string_append (malstr, (gchar *) envi->data);
         if (g_str_has_prefix ((gchar *) envi->data, "platform:")) {
             g_string_append_c (dbstr, ';');
-            g_string_append (dbstr, (gchar *) (envi->data + 9));
+            g_string_append (dbstr, (gchar *) (envi->data) + 9);
         }
     }
     g_string_append_c (malstr, '\'');
@@ -903,35 +1015,45 @@ gtk_theme_changed (GtkSettings  *gtk_settings,
     gtk_container_add (GTK_CONTAINER (tmpbox), tmpview);
     gtk_container_add (GTK_CONTAINER (tmpbox), tmplink);
     gtk_widget_show_all (tmpwin);
+
     context = gtk_widget_get_style_context (tmpview);
-    /* I have to do this for some reason. Don't ask me why. Ain't in the docs. */
+    gtk_style_context_save (context);
+
+    gtk_style_context_set_state (context, GTK_STATE_FLAG_NORMAL);
     gtk_style_context_add_class (context, GTK_STYLE_CLASS_VIEW);
-
-    linkcontext = gtk_widget_get_style_context (tmplink);
-
     gtk_style_context_get_color (context, GTK_STATE_FLAG_NORMAL, &text);
-    gtk_style_context_get_background_color (context, GTK_STATE_FLAG_ACTIVE, &base);
+    gtk_style_context_get_background_color (context, GTK_STATE_FLAG_NORMAL, &base);
+
+    gtk_style_context_restore (context);
 
     rgb_to_hsv (text, &text_h, &text_s, &text_v);
     rgb_to_hsv (base, &base_h, &base_s, &base_v);
 
     /* YELP_SETTINGS_COLOR_BASE */
     g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_BASE], 8, "#%02X%02X%02X",
-                (gint) (base.red * 255), (gint) (base.green * 255), (gint) (base.blue * 255));
+                (guint) (base.red * 255), (guint) (base.green * 255), (guint) (base.blue * 255));
 
     /* YELP_SETTINGS_COLOR_TEXT */
     g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_TEXT], 8, "#%02X%02X%02X",
-                (gint) (text.red * 255), (gint) (text.green * 255), (gint) (text.blue * 255));
+                (guint) (text.red * 255), (guint) (text.green * 255), (guint) (text.blue * 255));
+
+    linkcontext = gtk_widget_get_style_context (tmplink);
+    gtk_style_context_save (linkcontext);
 
     /* YELP_SETTINGS_COLOR_LINK */
+    gtk_style_context_set_state (linkcontext, GTK_STATE_FLAG_LINK);
     gtk_style_context_get_color (linkcontext, GTK_STATE_FLAG_LINK, &link);
     g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_LINK], 8, "#%02X%02X%02X",
-                (gint) (link.red * 255), (gint) (link.green * 255), (gint) (link.blue * 255));
+                (guint) (link.red * 255), (guint) (link.green * 255), (guint) (link.blue * 255));
 
     /* YELP_SETTINGS_COLOR_LINK_VISITED */
+    gtk_style_context_set_state (linkcontext, GTK_STATE_FLAG_VISITED);
     gtk_style_context_get_color (linkcontext, GTK_STATE_FLAG_VISITED, &link);
     g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_LINK_VISITED], 8, "#%02X%02X%02X",
-                (gint) (link.red * 255), (gint) (link.green * 255), (gint) (link.blue * 255));
+                (guint) (link.red * 255), (guint) (link.green * 255), (guint) (link.blue * 255));
+
+
+    gtk_style_context_restore (linkcontext);
 
     /* YELP_SETTINGS_COLOR_TEXT_LIGHT */
     hsv_to_hex (text_h, text_s, text_v - ((text_v - base_v) * 0.25),
@@ -1113,12 +1235,10 @@ static void
 hsv_to_hex (gdouble h, gdouble s, gdouble v, gchar *str)
 {
     gint hue;
-    gdouble c;
     gdouble m1, m2, m3;
     gdouble r, g, b;
-    guint8 red, green, blue;
+    guint red, green, blue;
 
-    c = v * s;
     h /= 60;
     hue = (int) h;
     m1 = v * (1 - s);
@@ -1139,6 +1259,8 @@ hsv_to_hex (gdouble h, gdouble s, gdouble v, gchar *str)
         g = m1; r = m3; break;
     case 5:
         g = m1; b = m2; break;
+    default:
+        g_assert_not_reached (); break;
     }
 
     red = r * 255;

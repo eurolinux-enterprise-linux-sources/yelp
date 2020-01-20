@@ -6,8 +6,6 @@ DOC_MAIN_SGML_FILE = libyelp-docs.xml
 
 SCAN_OPTIONS = --deprecated-guards="G_DISABLE_DEPRECATED" --rebuild-types
 
-SCANGOBJ_OPTIONS = --type-init-func="g_type_init();"
-
 DOC_SOURCE_DIR = $(top_srcdir)/libyelp
 
 GTKDOC_CFLAGS =						\
@@ -20,7 +18,14 @@ GTKDOC_LIBS =					\
 
 HFILE_GLOB = $(top_srcdir)/libyelp/*.h
 CFILE_GLOB = $(top_srcdir)/libyelp/*.c
-IGNORE_HFILES = yelp-debug.h yelp-types.h
+IGNORE_HFILES = yelp-common-types.h \
+	yelp-debug.h \
+	yelp-types.h \
+	$(top_srcdir)/libyelp/yelp-bz2-decompressor.h \
+	$(top_srcdir)/libyelp/yelp-lzma-decompressor.h \
+	$(top_srcdir)/libyelp/yelp-magic-decompressor.h
+IGNORE_CFILES = $(top_srcdir)/libyelp/yelp-lzma-decompressor.c \
+	$(top_srcdir)/libyelp/yelp-bz2-decompressor.c
 
 MKDB_OPTIONS = --output-format=xml --sgml-mode --name-space=yelp --ignore-files='yelp-debug.c yelp-debug.h yelp-types.c yelp-types.h'
 
@@ -29,8 +34,6 @@ content_files = version.xml
 extra_files = version.xml.in
 
 include $(top_srcdir)/gtk-doc.make
-
-EXTRA_DIST += version.xml.in
 
 # Extra options to supply to gtkdoc-mktmpl
 # e.g. MKTMPL_OPTIONS=--only-section-tmpl

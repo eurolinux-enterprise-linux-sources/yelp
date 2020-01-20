@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
-<!DOCTYPE book PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "">
 <book xmlns="http://www.devhelp.net/book" title="Yelp Reference Manual" link="index.html" author="" name="libyelp" version="2" language="c">
   <chapters>
     <sub name="API Reference" link="ch01.html">
@@ -28,6 +27,7 @@
     <keyword type="function" name="yelp_view_add_link_action ()" link="YelpView.html#yelp-view-add-link-action"/>
     <keyword type="function" name="yelp_view_get_active_link_uri ()" link="YelpView.html#yelp-view-get-active-link-uri"/>
     <keyword type="function" name="yelp_view_get_active_link_text ()" link="YelpView.html#yelp-view-get-active-link-text"/>
+    <keyword type="enum" name="enum YelpViewState" link="YelpView.html#YelpViewState"/>
     <keyword type="property" name="The “page-desc” property" link="YelpView.html#YelpView--page-desc"/>
     <keyword type="property" name="The “page-icon” property" link="YelpView.html#YelpView--page-icon"/>
     <keyword type="property" name="The “page-id” property" link="YelpView.html#YelpView--page-id"/>
@@ -40,6 +40,8 @@
     <keyword type="signal" name="The “new-view-requested” signal" link="YelpView.html#YelpView-new-view-requested"/>
     <keyword type="function" name="YelpDocumentCallback ()" link="YelpDocument.html#YelpDocumentCallback"/>
     <keyword type="function" name="yelp_document_get_for_uri ()" link="YelpDocument.html#yelp-document-get-for-uri"/>
+    <keyword type="function" name="yelp_document_lookup_document_uri ()" link="YelpDocument.html#yelp-document-lookup-document-uri"/>
+    <keyword type="function" name="yelp_document_get_uri ()" link="YelpDocument.html#yelp-document-get-uri"/>
     <keyword type="function" name="yelp_document_request_page ()" link="YelpDocument.html#yelp-document-request-page"/>
     <keyword type="function" name="yelp_document_clear_contents ()" link="YelpDocument.html#yelp-document-clear-contents"/>
     <keyword type="function" name="yelp_document_get_requests ()" link="YelpDocument.html#yelp-document-get-requests"/>
@@ -118,10 +120,21 @@
     <keyword type="enum" name="enum YelpSettingsFont" link="YelpSettings.html#YelpSettingsFont"/>
     <keyword type="enum" name="enum YelpSettingsIcon" link="YelpSettings.html#YelpSettingsIcon"/>
     <keyword type="struct" name="YelpSettingsPriv" link="YelpSettings.html#YelpSettingsPriv"/>
+    <keyword type="property" name="The “editor-mode” property" link="YelpSettings.html#YelpSettings--editor-mode"/>
+    <keyword type="property" name="The “font-adjustment” property" link="YelpSettings.html#YelpSettings--font-adjustment"/>
+    <keyword type="property" name="The “gtk-icon-theme” property" link="YelpSettings.html#YelpSettings--gtk-icon-theme"/>
+    <keyword type="property" name="The “gtk-settings” property" link="YelpSettings.html#YelpSettings--gtk-settings"/>
+    <keyword type="property" name="The “show-text-cursor” property" link="YelpSettings.html#YelpSettings--show-text-cursor"/>
+    <keyword type="signal" name="The “colors-changed” signal" link="YelpSettings.html#YelpSettings-colors-changed"/>
+    <keyword type="signal" name="The “fonts-changed” signal" link="YelpSettings.html#YelpSettings-fonts-changed"/>
+    <keyword type="signal" name="The “icons-changed” signal" link="YelpSettings.html#YelpSettings-icons-changed"/>
     <keyword type="function" name="yelp_error_copy ()" link="libyelp-yelp-error.html#yelp-error-copy"/>
-    <keyword type="function" name="yelp_error_get_title ()" link="libyelp-yelp-error.html#yelp-error-get-title"/>
     <keyword type="macro" name="YELP_ERROR" link="libyelp-yelp-error.html#YELP-ERROR:CAPS"/>
     <keyword type="enum" name="enum YelpError" link="libyelp-yelp-error.html#YelpError"/>
+    <keyword type="constant" name="YELP_VIEW_STATE_BLANK" link="YelpView.html#YELP-VIEW-STATE-BLANK:CAPS"/>
+    <keyword type="constant" name="YELP_VIEW_STATE_LOADING" link="YelpView.html#YELP-VIEW-STATE-LOADING:CAPS"/>
+    <keyword type="constant" name="YELP_VIEW_STATE_LOADED" link="YelpView.html#YELP-VIEW-STATE-LOADED:CAPS"/>
+    <keyword type="constant" name="YELP_VIEW_STATE_ERROR" link="YelpView.html#YELP-VIEW-STATE-ERROR:CAPS"/>
     <keyword type="constant" name="YELP_DOCUMENT_SIGNAL_CONTENTS" link="YelpDocument.html#YELP-DOCUMENT-SIGNAL-CONTENTS:CAPS"/>
     <keyword type="constant" name="YELP_DOCUMENT_SIGNAL_INFO" link="YelpDocument.html#YELP-DOCUMENT-SIGNAL-INFO:CAPS"/>
     <keyword type="constant" name="YELP_DOCUMENT_SIGNAL_ERROR" link="YelpDocument.html#YELP-DOCUMENT-SIGNAL-ERROR:CAPS"/>

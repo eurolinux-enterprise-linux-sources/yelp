@@ -33,7 +33,8 @@ static void
 print_uri (gchar *orig, YelpUri *uri, GOutputStream *stream)
 {
     GFile *file;
-    gchar *type = NULL, *tmp, **tmpv, *out;
+    const gchar *type = NULL;
+    gchar *tmp, **tmpv, *out;
 
     g_output_stream_write (stream, orig, strlen (orig), NULL, NULL);
     g_output_stream_write (stream, "\n", 1, NULL, NULL);
@@ -74,6 +75,9 @@ print_uri (gchar *orig, YelpUri *uri, GOutputStream *stream)
         break;
     case YELP_URI_DOCUMENT_TYPE_UNRESOLVED:
         type = "UNRESOLVED";
+        break;
+    default:
+        g_assert_not_reached ();
         break;
     }
 
@@ -223,7 +227,6 @@ main (int argc, char **argv)
     YelpUri *parent = NULL;
     YelpUri *uri = NULL;
 
-    g_type_init ();
     g_log_set_always_fatal (G_LOG_LEVEL_ERROR | G_LOG_LEVEL_CRITICAL);
         
     if (argc < 2) {

@@ -1,5 +1,187 @@
-3.14.2
+3.22.0
 ======
+* Add 'help' to list of desktop file keywords, #764322 (David King)
+* Updated translations:
+  cs    (Marek Černocký)
+  da    (Ask Hjorth Larsen)
+  de    (Mario Blättermann)
+  el    (Tom Tryfonidis)
+  en_GB (David King)
+  es    (Daniel Mustieles)
+  fa    (Arash Mousavi)
+  fi    (Jiri Grönroos)
+  fur   (Fabio Tomat)
+  fr    (Alexandre Franke)
+  gd    (GunChleoc)
+  gl    (Fran Dieguez)
+  he    (Yosef Or Boczko)
+  hu    (Balázs Úr)
+  id    (Andika Triwidada)
+  kk    (Baurzhan Muftakhidinov)
+  ko    (Seong-ho Cho)
+  lv    (Rūdolfs Mazurs)
+  pl    (Piotr Drąg)
+  pt    (Tiago Santos)
+  pt_BR (Rafael Ferreira)
+  sk    (Dušan Kazik)
+  sl    (Matej Urbančič)
+  sr    (Мирослав Николић)
+  sv    (Anders Jonsson)
+  uk    (Daniel Korostil)
+  vi    (Trần Ngọc Quân)
+
+3.21.3
+======
+
+* Build system improvements (Michael Catanzaro, Sam Spilsbury, Emmanuele
+  Bassi)
+* Compiler warning fix (Cosimo Cecchi)
+* Updated translations:
+  gd    (GunChleoc)
+  oc    (Cédric Valmary)
+  pt    (Sérgio Cardeira)
+
+3.20.1
+======
+* Updated translations:
+  ar    (Khaled Hosny)
+  fur   (Fabio Tomat)
+  oc    (Cédric Valmary)
+
+3.20.0
+======
+* Updated translations:
+  ca    (Gil Forcada)
+  da    (Ask Hjorth Larsen)
+  uk    (Daniel Korostil)
+
+3.19.91
+=======
+* Fallback to help-list: if no other help is available, #759545 (Aleksander
+  Morgado)
+* Fix warnings in GtkStyleContext usage, #761577 (Michael Catanzaro)
+
+3.19.90
+=======
+* Partial fix for handling documents using local paths, #753443 (Carlos Garcia Campos)
+* Allow .docbook files as file path, #699995 (Shaun McCance)
+* Fix return type of document_indexed, #761647 (Michael Catanzaro)
+* Fix build issue with separate builddir, #757139 (Shaun McCance)
+* Updated translations:
+  an    (Daniel Martinez)
+  bg    (Alexander Shopov)
+  gd
+  is    (Sveinn í Felli)
+  zh_CN (YunQiang Su, Jeff Bai)
+
+3.19.1
+======
+* Simplify build system and avoid private yelpcommon library, #756654 (David
+  King)
+* Hide several internal symbols, #756658 (David King)
+* Updated translations:
+  eu       (Inaki Larranaga Murgoitio)
+
+3.18.1
+======
+* Updated translations:
+  el       (Tom Tryfonidis)
+  sr       (Милош Поповић)
+  sr@latin (Милош Поповић)
+  vi       (Trần Ngọc Quân)
+
+3.18.0
+======
+* Fix accessibility regression for caret navigation, #754912 (Carlos Garcia Campos)
+* Updated translations:
+  da    (Ask Hjorth Larsen)
+  de    (Simon Linden)
+  fa    (Arash Mousavi)
+  fi    (Jiri Grönroos)
+  it    (Milo Casagrande)
+  ja    (Jiro Matsuzawa)
+  kk    (Baurzhan Muftakhidinov)
+  ko    (Changwoo Ryu)
+  lt    (Aurimas Černius)
+  lv    (Rūdolfs Mazurs)
+  pt_BR (Enrico Nicoletto)
+
+3.17.91
+=======
+* Use XDG_CURRENT_DESKTOP, when available, to set platform conditionals (Shaun
+  McCance)
+* Fix crash after page title change bugfix (Shaun McCance)
+* Updated translations:
+  el    (Tom Tryfonidis)
+  id    (Andika Triwidada)
+  pl    (Piotr Drąg)
+  tr    (Muhammet Kara)
+  zh_TW (Chao-Hsiung Liao)
+
+3.17.90
+=======
+* Fix page title changes when going backward and forward, #753448 (Carlos
+  Garcia Campos)
+* Improve subtitle to only be shown when it differs from the page title,
+  #753444 (Michael Catanzaro)
+* Fix startup activation, #753084 (Cosimo Cecchi)
+* Updated translations:
+  cs    (Marek Černocký)
+  fr    (Alexandre Franke)
+  fur   (Fabio Tomat)
+  gl    (Fran Dieguez)
+  nb    (Kjartan Maraas)
+  sv    (Anders Jonsson)
+
+3.17.4
+======
+* Use the correct background color, #749947 (Lars Uebernickel)
+* Updated translations:
+  es    (Daniel Mustieles)
+  he    (Yosef Or Boczko)
+  hu    (Balázs Úr)
+  pt    (Pedro Albuquerque)
+  ru    (Stas Solovey)
+  sk    (Dušan Kazik)
+  sl    (Matej Urbančič)
+  tg    (Victor Ibragimov)
+
+3.17.3
+======
+* Port to WebKit2 API, #686376 (Marcos Chavarría Teijeiro, Carlos Garcia
+  Campos, David King)
+* Use a header bar as a toolbar in Unity, #749903 (Iain Lane)
+
+3.17.2
+======
+* Support for platform conditional tokens from os-release (Shaun McCance)
+* Updated translations:
+  is    (Sveinn í Felli)
+  oc    (Cédric Valmary)
+
+3.16.0
+======
+* Avoid recursive activation, #745407 (Matthias Clasen)
+* Updated translations:
+  bs    (Samir Ribic)
+  kk    (Baurzhan Muftakhidinov)
+  tg    (Victor Ibragimov)
+
+3.15.91
+=======
+* Update AX_COMPILER_FLAGS from autoconf-archive (David King)
+* Use GtkSettings 'gtk-xft-dpi' property to keep track of Xft DPI changes
+  (Mario Sanchez Prada)
+
+3.15.90
+=======
+* Use a default filename when priting to a file, #737206 (David King)
+* Use g_async_queue_new_full(), #737528 (Paolo Borelli)
+* Ignore unused decompressor files, #737519 (Gergely Polonkai)
+* Remove g_type_init() calls, #737518 (Gergely Polonkai)
+* Use AX_COMPILER_FLAGS (David King, Philip Withnall)
+* Fix many compiler warnings (David King)
+* Check if __STDC_VERSION__ is defined, #744454 (Mark Chalupa)
 * Updated translations:
   he    (Yosef Or Boczko)
   is    (Sveinn í Felli)

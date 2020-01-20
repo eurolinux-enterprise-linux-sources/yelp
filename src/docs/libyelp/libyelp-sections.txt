@@ -15,22 +15,6 @@ yelp_bookmarks_get_type
 </SECTION>
 
 <SECTION>
-<FILE>yelp-bz2-decompressor</FILE>
-<TITLE>YelpBz2Decompressor</TITLE>
-yelp_bz2_decompressor_new
-<SUBSECTION Standard>
-YELP_BZ2_DECOMPRESSOR
-YELP_BZ2_DECOMPRESSOR_CLASS
-YELP_BZ2_DECOMPRESSOR_GET_CLASS
-YELP_IS_BZ2_DECOMPRESSOR
-YELP_IS_BZ2_DECOMPRESSOR_CLASS
-YELP_TYPE_BZ2_DECOMPRESSOR
-YelpBz2Decompressor
-YelpBz2DecompressorClass
-yelp_bz2_decompressor_get_type
-</SECTION>
-
-<SECTION>
 <FILE>yelp-docbook-document</FILE>
 <TITLE>YelpDocbookDocument</TITLE>
 yelp_docbook_document_new
@@ -52,6 +36,8 @@ yelp_docbook_document_get_type
 YelpDocumentSignal
 YelpDocumentCallback
 yelp_document_get_for_uri
+yelp_document_lookup_document_uri
+yelp_document_get_uri
 yelp_document_request_page
 yelp_document_clear_contents
 yelp_document_get_requests
@@ -99,7 +85,6 @@ yelp_document_get_type
 YELP_ERROR
 YelpError
 yelp_error_copy
-yelp_error_get_title
 </SECTION>
 
 <SECTION>
@@ -141,38 +126,6 @@ yelp_info_parser_parse_tree
 </SECTION>
 
 <SECTION>
-<FILE>yelp-lzma-decompressor</FILE>
-<TITLE>YelpLzmaDecompressor</TITLE>
-yelp_lzma_decompressor_new
-<SUBSECTION Standard>
-YELP_IS_LZMA_DECOMPRESSOR
-YELP_IS_LZMA_DECOMPRESSOR_CLASS
-YELP_LZMA_DECOMPRESSOR
-YELP_LZMA_DECOMPRESSOR_CLASS
-YELP_LZMA_DECOMPRESSOR_GET_CLASS
-YELP_TYPE_LZMA_DECOMPRESSOR
-YelpLzmaDecompressor
-YelpLzmaDecompressorClass
-yelp_lzma_decompressor_get_type
-</SECTION>
-
-<SECTION>
-<FILE>yelp-magic-decompressor</FILE>
-<TITLE>YelpMagicDecompressor</TITLE>
-yelp_magic_decompressor_new
-<SUBSECTION Standard>
-YELP_IS_MAGIC_DECOMPRESSOR
-YELP_IS_MAGIC_DECOMPRESSOR_CLASS
-YELP_MAGIC_DECOMPRESSOR
-YELP_MAGIC_DECOMPRESSOR_CLASS
-YELP_MAGIC_DECOMPRESSOR_GET_CLASS
-YELP_TYPE_MAGIC_DECOMPRESSOR
-YelpMagicDecompressor
-YelpMagicDecompressorClass
-yelp_magic_decompressor_get_type
-</SECTION>
-
-<SECTION>
 <FILE>yelp-mallard-document</FILE>
 <TITLE>YelpMallardDocument</TITLE>
 yelp_mallard_document_new
@@ -210,12 +163,6 @@ yelp_man_parser_new
 yelp_man_parser_parse_file
 yelp_man_parser_free
 YelpManParser
-</SECTION>
-
-<SECTION>
-<FILE>yelp-marshal</FILE>
-yelp_marshal_VOID__OBJECT_BOXED
-yelp_marshal_BOOLEAN__OBJECT
 </SECTION>
 
 <SECTION>
@@ -272,6 +219,7 @@ YELP_SETTINGS_GET_CLASS
 YELP_TYPE_SETTINGS
 YelpSettings
 YelpSettingsClass
+yelp_settings_get_type
 </SECTION>
 
 <SECTION>
@@ -342,6 +290,7 @@ YELP_TRANSFORM_CLASS
 YELP_TYPE_TRANSFORM
 YelpTransform
 YelpTransformClass
+yelp_transform_get_type
 </SECTION>
 
 <SECTION>
@@ -376,9 +325,17 @@ yelp_uri_get_type
 </SECTION>
 
 <SECTION>
+<FILE>yelp-uri-builder</FILE>
+build_network_uri
+build_yelp_uri
+build_network_scheme
+</SECTION>
+
+<SECTION>
 <FILE>yelp-view</FILE>
 <TITLE>YelpView</TITLE>
 YelpViewActionValidFunc
+YelpViewState
 yelp_view_new
 yelp_view_load
 yelp_view_load_uri
@@ -397,8 +354,6 @@ YELP_VIEW_CLASS
 YELP_VIEW_GET_CLASS
 YelpView
 YelpViewClass
-YelpViewState
 yelp_view_get_type
-yelp_view_state_get_type
 </SECTION>
 

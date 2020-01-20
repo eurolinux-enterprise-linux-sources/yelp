@@ -28,6 +28,7 @@
 #include <libxml/parser.h>
 #include <libxml/parserInternals.h>
 #include <libxml/xinclude.h>
+#include <libxml/xpathInternals.h>
 
 #include "yelp-error.h"
 #include "yelp-mallard-document.h"
@@ -37,7 +38,7 @@
 #include "yelp-debug.h"
 
 #define STYLESHEET DATADIR"/yelp/xslt/mal2html.xsl"
-#define MALLARD_NS "http://projectmallard.org/1.0/"
+#define MALLARD_NS BAD_CAST "http://projectmallard.org/1.0/"
 
 typedef enum {
     MALLARD_STATE_BLANK,
@@ -70,8 +71,6 @@ typedef struct {
     gchar         *next_page;
 } MallardPageData;
 
-static void           yelp_mallard_document_class_init (YelpMallardDocumentClass *klass);
-static void           yelp_mallard_document_init       (YelpMallardDocument      *mallard);
 static void           yelp_mallard_document_dispose    (GObject                  *object);
 static void           yelp_mallard_document_finalize   (GObject                  *object);
 
@@ -113,12 +112,11 @@ static gboolean       xml_node_is_ns_name       (xmlNodePtr            node,
                                                  const xmlChar        *name);
 
 
-G_DEFINE_TYPE (YelpMallardDocument, yelp_mallard_document, YELP_TYPE_DOCUMENT);
+G_DEFINE_TYPE (YelpMallardDocument, yelp_mallard_document, YELP_TYPE_DOCUMENT)
 #define GET_PRIV(object) (G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_MALLARD_DOCUMENT, YelpMallardDocumentPrivate))
 
 typedef struct _YelpMallardDocumentPrivate  YelpMallardDocumentPrivate;
 struct _YelpMallardDocumentPrivate {
-    YelpUri       *uri;
     MallardState   state;
 
     GMutex         mutex;
@@ -166,7 +164,7 @@ yelp_mallard_document_init (YelpMallardDocument *mallard)
     priv->index_running = FALSE;
 
     priv->cache = xmlNewDoc (BAD_CAST "1.0");
-    priv->cache_ns = xmlNewNs (NULL, BAD_CAST MALLARD_NS, BAD_CAST "mal");
+    priv->cache_ns = xmlNewNs (NULL, MALLARD_NS, BAD_CAST "mal");
     cur = xmlNewDocNode (priv->cache, priv->cache_ns, BAD_CAST "cache", NULL);
     xmlDocSetRootElement (priv->cache, cur);
     priv->cache_ns->next = cur->nsDef;
@@ -174,7 +172,7 @@ yelp_mallard_document_init (YelpMallardDocument *mallard)
     priv->pages_hash = g_hash_table_new_full (g_str_hash, g_str_equal,
                                               NULL,
                                               (GDestroyNotify) mallard_page_data_free);
-    priv->normalize = xmlXPathCompile ("normalize-space(.)");
+    priv->normalize = xmlXPathCompile (BAD_CAST "normalize-space(.)");
 }
 
 static void
@@ -199,7 +197,6 @@ yelp_mallard_document_finalize (GObject *object)
 {
     YelpMallardDocumentPrivate *priv = GET_PRIV (object);
 
-    g_object_unref (priv->uri);
     g_mutex_clear (&priv->mutex);
     g_hash_table_destroy (priv->pages_hash);
 
@@ -217,19 +214,15 @@ yelp_mallard_document_new (YelpUri *uri)
 {
     YelpMallardDocument *mallard;
     YelpMallardDocumentPrivate *priv;
-    gchar *doc_uri;
     gchar **path;
     gint path_i;
 
     g_return_val_if_fail (uri != NULL, NULL);
 
-    doc_uri = yelp_uri_get_document_uri (uri);
     mallard = (YelpMallardDocument *) g_object_new (YELP_TYPE_MALLARD_DOCUMENT,
-                                                    "document-uri", doc_uri,
+                                                    "document-uri", uri,
                                                     NULL);
-    g_free (doc_uri);
     priv = GET_PRIV (mallard);
-    priv->uri = g_object_ref (uri);
 
     yelp_document_set_page_id ((YelpDocument *) mallard, NULL, "index");
     yelp_document_set_page_id ((YelpDocument *) mallard, "index", "index");
@@ -300,7 +293,7 @@ mallard_request_page (YelpDocument         *document,
         break;
     case MALLARD_STATE_BLANK:
     case MALLARD_STATE_STOP:
-        docuri = yelp_uri_get_document_uri (priv->uri);
+        docuri = yelp_uri_get_document_uri (yelp_document_get_uri (document));
         error = g_error_new (YELP_ERROR, YELP_ERROR_NOT_FOUND,
                              _("The page ‘%s’ was not found in the document ‘%s’."),
                              page_id, docuri);
@@ -309,7 +302,10 @@ mallard_request_page (YelpDocument         *document,
                               YELP_DOCUMENT_SIGNAL_ERROR,
                               error);
         g_error_free (error);
-	break;
+        break;
+    default:
+        g_assert_not_reached ();
+        break;
     }
 
     g_mutex_unlock (&priv->mutex);
@@ -328,13 +324,13 @@ mallard_think (YelpMallardDocument *mallard)
 
     gchar **path;
     gint path_i;
-    GFile *gfile;
-    GFileEnumerator *children;
+    GFile *gfile = NULL;
+    GFileEnumerator *children = NULL;
     GFileInfo *pageinfo;
 
     editor_mode = yelp_settings_get_editor_mode (yelp_settings_get_default ());
 
-    path = yelp_uri_get_search_path (priv->uri);
+    path = yelp_uri_get_search_path (yelp_document_get_uri ((YelpDocument *) mallard));
     if (!path || path[0] == NULL ||
         !g_file_test (path[0], G_FILE_TEST_IS_DIR)) {
         /* This basically only happens when someone passes an actual directory
@@ -451,7 +447,7 @@ mallard_try_run (YelpMallardDocument *mallard,
     }
 
     if (page_data == NULL) {
-        gchar *docuri = yelp_uri_get_document_uri (priv->uri);
+        gchar *docuri = yelp_uri_get_document_uri (yelp_document_get_uri ((YelpDocument *) mallard));
         error = g_error_new (YELP_ERROR, YELP_ERROR_NOT_FOUND,
                              _("The page ‘%s’ was not found in the document ‘%s’."),
                              page_id, docuri);
@@ -572,25 +568,24 @@ mallard_page_data_walk (MallardPageData *page_data)
                     xmlAddChild (title_node, xmlCopyNode (node, 1));
                 }
                 if (!page_data->link_title) {
-                    xmlNodePtr title_node = xmlNewChild (info,
-                                                         priv->cache_ns,
-                                                         BAD_CAST "title", NULL);
-                    xmlSetProp (title_node, BAD_CAST "type", BAD_CAST "link");
+                    xmlNodePtr title_node2 = xmlNewChild (info,
+                                                          priv->cache_ns,
+                                                          BAD_CAST "title", NULL);
+                    xmlSetProp (title_node2, BAD_CAST "type", BAD_CAST "link");
                     for (node = child->children; node; node = node->next) {
-                        xmlAddChild (title_node, xmlCopyNode (node, 1));
+                        xmlAddChild (title_node2, xmlCopyNode (node, 1));
                     }
                 }
                 if (!page_data->sort_title) {
-                    xmlNodePtr title_node = xmlNewChild (info,
-                                                         priv->cache_ns,
-                                                         BAD_CAST "title", NULL);
-                    xmlSetProp (title_node, BAD_CAST "type", BAD_CAST "sort");
+                    xmlNodePtr title_node2 = xmlNewChild (info,
+                                                          priv->cache_ns,
+                                                          BAD_CAST "title", NULL);
+                    xmlSetProp (title_node2, BAD_CAST "type", BAD_CAST "sort");
                     for (node = child->children; node; node = node->next) {
-                        xmlAddChild (title_node, xmlCopyNode (node, 1));
+                        xmlAddChild (title_node2, xmlCopyNode (node, 1));
                     }
                 }
                 if (page_data->page_title == NULL) {
-                    YelpMallardDocumentPrivate *priv = GET_PRIV (page_data->mallard);
                     xmlXPathObjectPtr obj;
                     page_data->xpath->node = child;
                     obj = xmlXPathCompiledEval (priv->normalize, page_data->xpath);
@@ -622,14 +617,13 @@ mallard_page_data_info (MallardPageData *page_data,
                         xmlNodePtr       cache_node)
 {
     xmlNodePtr child;
-    gboolean editor_mode = yelp_settings_get_editor_mode (yelp_settings_get_default ());
 
     for (child = info_node->children; child; child = child->next) {
         if (xml_node_is_ns_name (child, MALLARD_NS, BAD_CAST "info")) {
             mallard_page_data_info (page_data, child, cache_node);
         }
         else if (xml_node_is_ns_name (child, MALLARD_NS, BAD_CAST "title")) {
-            xmlNodePtr node, title_node;
+            xmlNodePtr title_node;
             xmlChar *type, *role;
             title_node = xmlCopyNode (child, 1);
             xmlAddChild (cache_node, title_node);
@@ -648,7 +642,7 @@ mallard_page_data_info (MallardPageData *page_data,
                     page_data->xpath->node = child;
                     obj = xmlXPathCompiledEval (priv->normalize, page_data->xpath);
                     g_free (page_data->page_title);
-                    page_data->page_title = g_strdup (obj->stringval);
+                    page_data->page_title = g_strdup ((const gchar *) obj->stringval);
                     xmlXPathFreeObject (obj);
                 }
                 if (role != NULL)
@@ -661,7 +655,7 @@ mallard_page_data_info (MallardPageData *page_data,
             xmlXPathObjectPtr obj;
             page_data->xpath->node = child;
             obj = xmlXPathCompiledEval (priv->normalize, page_data->xpath);
-            page_data->page_desc = g_strdup (obj->stringval);
+            page_data->page_desc = g_strdup ((const gchar *) obj->stringval);
             xmlXPathFreeObject (obj);
 
             xmlAddChild (cache_node, xmlCopyNode (child, 1));
@@ -673,12 +667,12 @@ mallard_page_data_info (MallardPageData *page_data,
 
             type = xmlGetProp (child, BAD_CAST "type");
             if (type != NULL) {
-                if (xmlStrEqual (type, "next")) {
+                if (xmlStrEqual (type, BAD_CAST "next")) {
                     next = xmlGetProp (child, BAD_CAST "xref");
                     if (next != NULL) {
                         if (page_data->next_page != NULL)
                             g_free (page_data->next_page);
-                        page_data->next_page = g_strdup (next);
+                        page_data->next_page = g_strdup ((const gchar *) next);
                         xmlFree (next);
                     }
                 }
@@ -702,7 +696,6 @@ mallard_page_data_run (MallardPageData *page_data)
 {
     YelpSettings *settings = yelp_settings_get_default ();
     YelpMallardDocumentPrivate *priv = GET_PRIV (page_data->mallard);
-    gint i, ix;
     gchar **params = NULL;
 
     mallard_page_data_cancel (page_data);
@@ -843,11 +836,11 @@ xml_node_get_icon (xmlNodePtr node)
 {
     xmlChar *style;
     gchar **styles;
-    gchar *icon = "yelp-page-symbolic";
+    const gchar *icon = "yelp-page-symbolic";
     style = xmlGetProp (node, BAD_CAST "style");
     if (style) {
         gint i;
-        styles = g_strsplit (style, " ", -1);
+        styles = g_strsplit ((const gchar *)style, " ", -1);
         for (i = 0; styles[i] != NULL; i++) {
             if (g_str_equal (styles[i], "video")) {
                 icon = "yelp-page-video-symbolic";
@@ -884,7 +877,7 @@ xml_node_is_ns_name (xmlNodePtr      node,
     if (node->ns == NULL)
         return (ns == NULL);
     else if (ns != NULL && node->ns->href != NULL)
-        return (xmlStrEqual (ns, node->ns->href) && xmlStrEqual (name, node->name)); 
+        return (xmlStrEqual (ns, node->ns->href) && xmlStrEqual (name, node->name));
     return FALSE;
 }
 
@@ -915,7 +908,7 @@ mallard_index_node (MallardIndexData *index)
                 g_string_append_c (index->str, ' ');
             }
             if (child->type == XML_TEXT_NODE) {
-                g_string_append (index->str, child->content);
+                g_string_append (index->str, (const gchar *) child->content);
                 continue;
             }
         }
@@ -960,11 +953,13 @@ mallard_index_threaded (YelpMallardDocument *mallard)
     gint path_i;
     GHashTable *ids;
     gchar *doc_uri;
+    YelpUri *document_uri;
     YelpMallardDocumentPrivate *priv = GET_PRIV (mallard);
 
-    doc_uri = yelp_uri_get_document_uri (priv->uri);
+    document_uri = yelp_document_get_uri (YELP_DOCUMENT (mallard));
+    doc_uri = yelp_uri_get_document_uri (document_uri);
     ids = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, NULL);
-    path = yelp_uri_get_search_path (priv->uri);
+    path = yelp_uri_get_search_path (document_uri);
     for (path_i = 0; path[path_i] != NULL; path_i++) {
         GFile *gfile;
         GFileEnumerator *children;
@@ -981,7 +976,7 @@ mallard_index_threaded (YelpMallardDocument *mallard)
             xmlXPathContextPtr xpath = NULL;
             xmlXPathObjectPtr obj;
             MallardIndexData *index = NULL;
-            xmlChar *id;
+            xmlChar *id = NULL;
             YelpUri *uri;
             gchar *title, *desc, *fulltext, *tmp, *full_uri;
 
@@ -1019,28 +1014,28 @@ mallard_index_threaded (YelpMallardDocument *mallard)
             if (g_hash_table_lookup (ids, id))
                 goto done;
             /* We never use the value. Just need something non-NULL. */
-            g_hash_table_insert (ids, g_strdup (id), id);
+            g_hash_table_insert (ids, g_strdup ((const gchar *) id), id);
 
             xpath = xmlXPathNewContext (index->doc);
-            xmlXPathRegisterNs (xpath, BAD_CAST "mal", BAD_CAST MALLARD_NS);
+            xmlXPathRegisterNs (xpath, BAD_CAST "mal", MALLARD_NS);
             obj = xmlXPathEvalExpression (BAD_CAST
                                           "normalize-space((/mal:page/mal:info/mal:title[@type='text'] |"
                                           "/mal:page/mal:title)[1])",
                                           xpath);
-            title = g_strdup (obj->stringval);
+            title = g_strdup ((const gchar *) obj->stringval);
             xmlXPathFreeObject (obj);
             obj = xmlXPathEvalExpression (BAD_CAST
                                           "normalize-space(/mal:page/mal:info/mal:desc[1])",
                                           xpath);
-            desc = g_strdup (obj->stringval);
+            desc = g_strdup ((const gchar *) obj->stringval);
             xmlXPathFreeObject (obj);
 
-            index->str = g_string_new (desc);
+            index->str = g_string_new ((const gchar *) desc);
             g_string_append_c (index->str, ' ');
             mallard_index_node (index);
 
             tmp = g_strconcat ("xref:", id, NULL);
-            uri = yelp_uri_new_relative (priv->uri, tmp);
+            uri = yelp_uri_new_relative (document_uri, tmp);
             yelp_uri_resolve_sync (uri);
             full_uri = yelp_uri_get_canonical_uri (uri);
             g_free (tmp);
@@ -1136,7 +1131,7 @@ mallard_monitor_changed (GFileMonitor         *monitor,
 
     xmlFreeDoc (priv->cache);
     priv->cache = xmlNewDoc (BAD_CAST "1.0");
-    priv->cache_ns = xmlNewNs (NULL, BAD_CAST MALLARD_NS, BAD_CAST "mal");
+    priv->cache_ns = xmlNewNs (NULL, MALLARD_NS, BAD_CAST "mal");
     cur = xmlNewDocNode (priv->cache, priv->cache_ns, BAD_CAST "cache", NULL);
     xmlDocSetRootElement (priv->cache, cur);
     priv->cache_ns->next = cur->nsDef;
