@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -44,10 +46,11 @@ typedef enum {
 
 typedef struct _YelpManDocumentPrivate  YelpManDocumentPrivate;
 struct _YelpManDocumentPrivate {
+    YelpUri    *uri;
     ManState    state;
     gchar      *page_id;
 
-    GMutex      mutex;
+    GMutex     *mutex;
     GThread    *thread;
 
     xmlDocPtr   xmldoc;
@@ -63,8 +66,8 @@ struct _YelpManDocumentPrivate {
 
 typedef struct _YelpLangEncodings YelpLangEncodings;
 struct _YelpLangEncodings {
-    const gchar *language;
-    const gchar *encoding;
+    gchar *language;
+    gchar *encoding;
 };
 /* http://www.w3.org/International/O-charset-lang.html */
 static const YelpLangEncodings langmap[] = {
@@ -117,6 +120,9 @@ static const YelpLangEncodings langmap[] = {
     { NULL,    NULL },
 };
 
+static void           yelp_man_document_class_init       (YelpManDocumentClass   *klass);
+static void           yelp_man_document_init             (YelpManDocument        *man);
+static void           yelp_man_document_dispose          (GObject                *object);
 static void           yelp_man_document_finalize         (GObject                *object);
 
 /* YelpDocument */
@@ -124,8 +130,7 @@ static gboolean       man_request_page                   (YelpDocument          
                                                           const gchar            *page_id,
                                                           GCancellable           *cancellable,
                                                           YelpDocumentCallback    callback,
-                                                          gpointer                user_data,
-                                                          GDestroyNotify          notify);
+                                                          gpointer                user_data);
 
 /* YelpTransform */
 static void           transform_chunk_ready              (YelpTransform          *transform,
@@ -144,7 +149,7 @@ static void           man_document_process               (YelpManDocument       
 static void           man_document_disconnect            (YelpManDocument        *man);
 
 
-G_DEFINE_TYPE (YelpManDocument, yelp_man_document, YELP_TYPE_DOCUMENT)
+G_DEFINE_TYPE (YelpManDocument, yelp_man_document, YELP_TYPE_DOCUMENT);
 #define GET_PRIV(object) (G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_MAN_DOCUMENT, YelpManDocumentPrivate))
 
 static void
@@ -153,6 +158,7 @@ yelp_man_document_class_init (YelpManDocumentClass *klass)
     GObjectClass      *object_class   = G_OBJECT_CLASS (klass);
     YelpDocumentClass *document_class = YELP_DOCUMENT_CLASS (klass);
 
+    object_class->dispose = yelp_man_document_dispose;
     object_class->finalize = yelp_man_document_finalize;
 
     document_class->request_page = man_request_page;
@@ -166,7 +172,20 @@ yelp_man_document_init (YelpManDocument *man)
     YelpManDocumentPrivate *priv = GET_PRIV (man);
 
     priv->state = MAN_STATE_BLANK;
-    g_mutex_init (&priv->mutex);
+    priv->mutex = g_mutex_new ();
+}
+
+static void
+yelp_man_document_dispose (GObject *object)
+{
+    YelpManDocumentPrivate *priv = GET_PRIV (object);
+
+    if (priv->uri) {
+        g_object_unref (priv->uri);
+        priv->uri = NULL;
+    }
+
+    G_OBJECT_CLASS (yelp_man_document_parent_class)->dispose (object);
 }
 
 static void
@@ -177,7 +196,7 @@ yelp_man_document_finalize (GObject *object)
     if (priv->xmldoc)
 	xmlFreeDoc (priv->xmldoc);
 
-    g_mutex_clear (&priv->mutex);
+    g_mutex_free (priv->mutex);
     g_free (priv->page_id);
 
     G_OBJECT_CLASS (yelp_man_document_parent_class)->finalize (object);
@@ -188,11 +207,22 @@ yelp_man_document_finalize (GObject *object)
 YelpDocument *
 yelp_man_document_new (YelpUri *uri)
 {
+    YelpManDocument *man;
+    YelpManDocumentPrivate *priv;
+    gchar *doc_uri;
+
     g_return_val_if_fail (uri != NULL, NULL);
 
-    return  (YelpDocument *) g_object_new (YELP_TYPE_MAN_DOCUMENT,
-                                           "document-uri", uri,
-                                           NULL);
+    doc_uri = yelp_uri_get_document_uri (uri);
+    man = (YelpManDocument *) g_object_new (YELP_TYPE_MAN_DOCUMENT,
+                                            "document-uri", doc_uri,
+                                            NULL);
+    g_free (doc_uri);
+    priv = GET_PRIV (man);
+
+    priv->uri = g_object_ref (uri);
+
+    return (YelpDocument *) man;
 }
 
 
@@ -204,15 +234,14 @@ man_request_page (YelpDocument         *document,
                   const gchar          *page_id,
                   GCancellable         *cancellable,
                   YelpDocumentCallback  callback,
-                  gpointer              user_data,
-                  GDestroyNotify        notify)
+                  gpointer              user_data)
 {
     YelpManDocumentPrivate *priv = GET_PRIV (document);
     gchar *docuri, *fulluri;
     GError *error;
     gboolean handled;
 
-    fulluri = yelp_uri_get_canonical_uri (yelp_document_get_uri (document));
+    fulluri = yelp_uri_get_canonical_uri (priv->uri);
     if (g_str_has_prefix (fulluri, "man:"))
         priv->page_id = g_strdup (fulluri + 4);
     else
@@ -224,13 +253,12 @@ man_request_page (YelpDocument         *document,
                                                                             page_id,
                                                                             cancellable,
                                                                             callback,
-                                                                            user_data,
-                                                                            notify);
+                                                                            user_data);
     if (handled) {
         return handled;
     }
 
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
 
     switch (priv->state) {
     case MAN_STATE_BLANK:
@@ -242,15 +270,14 @@ man_request_page (YelpDocument         *document,
         yelp_document_set_page_id (document, "//index", priv->page_id);
         yelp_document_set_page_id (document, priv->page_id, priv->page_id);
         yelp_document_set_root_id (document, priv->page_id, priv->page_id);
-	priv->thread = g_thread_new ("man-page",
-                                     (GThreadFunc) man_document_process,
-                                     document);
+	priv->thread = g_thread_create ((GThreadFunc) man_document_process,
+                                        document, FALSE, NULL);
 	break;
     case MAN_STATE_PARSING:
 	break;
     case MAN_STATE_PARSED:
     case MAN_STATE_STOP:
-        docuri = yelp_uri_get_document_uri (yelp_document_get_uri (document));
+        docuri = yelp_uri_get_document_uri (priv->uri);
         error = g_error_new (YELP_ERROR, YELP_ERROR_NOT_FOUND,
                              _("The page ‘%s’ was not found in the document ‘%s’."),
                              page_id, docuri);
@@ -260,12 +287,9 @@ man_request_page (YelpDocument         *document,
                               error);
         g_error_free (error);
         break;
-    default:
-        g_assert_not_reached ();
-        break;
     }
 
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
     return FALSE;
 }
 
@@ -330,7 +354,7 @@ transform_finished (YelpTransform    *transform,
                        (GWeakNotify) transform_finalized,
                        man);
 
-    docuri = yelp_uri_get_document_uri (yelp_document_get_uri ((YelpDocument *) man));
+    docuri = yelp_uri_get_document_uri (priv->uri);
     error = g_error_new (YELP_ERROR, YELP_ERROR_NOT_FOUND,
                          _("The requested page was not found in the document ‘%s’."),
                          docuri);
@@ -387,7 +411,7 @@ man_document_process (YelpManDocument *man)
     YelpManParser *parser;
     const gchar *language, *encoding;
 
-    file = yelp_uri_get_file (yelp_document_get_uri ((YelpDocument *) man));
+    file = yelp_uri_get_file (priv->uri);
     if (file == NULL) {
         error = g_error_new (YELP_ERROR, YELP_ERROR_NOT_FOUND,
                              _("The file does not exist."));
@@ -433,9 +457,9 @@ man_document_process (YelpManDocument *man)
 	yelp_document_error_pending ((YelpDocument *) man, error);
     }
 
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
     if (priv->state == MAN_STATE_STOP) {
-	g_mutex_unlock (&priv->mutex);
+	g_mutex_unlock (priv->mutex);
 	goto done;
     }
 
@@ -461,7 +485,7 @@ man_document_process (YelpManDocument *man)
                           NULL,
 			  (const gchar * const *) params);
     g_strfreev (params);
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
 
  done:
     g_free (filepath);

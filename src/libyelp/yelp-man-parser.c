@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -140,19 +142,19 @@ typedef gboolean (*LineParser)(YelpManParser *, GError **);
 #define DECLARE_LINE_PARSER(name) \
     static gboolean (name) (YelpManParser *parser, GError **error);
 
-DECLARE_LINE_PARSER (parse_xf)
-DECLARE_LINE_PARSER (parse_f)
-DECLARE_LINE_PARSER (parse_V)
-DECLARE_LINE_PARSER (parse_H)
-DECLARE_LINE_PARSER (parse_v)
-DECLARE_LINE_PARSER (parse_h)
-DECLARE_LINE_PARSER (parse_text)
-DECLARE_LINE_PARSER (parse_w)
-DECLARE_LINE_PARSER (parse_body_text)
-DECLARE_LINE_PARSER (parse_n)
-DECLARE_LINE_PARSER (parse_N)
-DECLARE_LINE_PARSER (parse_C)
-DECLARE_LINE_PARSER (parse_p)
+DECLARE_LINE_PARSER (parse_xf);
+DECLARE_LINE_PARSER (parse_f);
+DECLARE_LINE_PARSER (parse_V);
+DECLARE_LINE_PARSER (parse_H);
+DECLARE_LINE_PARSER (parse_v);
+DECLARE_LINE_PARSER (parse_h);
+DECLARE_LINE_PARSER (parse_text);
+DECLARE_LINE_PARSER (parse_w);
+DECLARE_LINE_PARSER (parse_body_text);
+DECLARE_LINE_PARSER (parse_n);
+DECLARE_LINE_PARSER (parse_N);
+DECLARE_LINE_PARSER (parse_C);
+DECLARE_LINE_PARSER (parse_p);
 
 /* Declare a sort of alist registry of parsers for different lines. */
 struct LineParsePair
@@ -369,24 +371,19 @@ get_troff (gchar *path, GError **error)
 {
     gint ystdout;
     GError *err = NULL;
-    const gchar *argv[] = { "man", "-Z", "-Tutf8", "-EUTF-8", path, NULL };
-    gchar **my_argv;
+    gchar *argv[] = { "man", "-Z", "-Tutf8", "-EUTF-8", NULL, NULL };
 
-    /* g_strdupv() should accept a "const gchar **". */
-    my_argv = g_strdupv ((gchar **) argv);
+    argv[4] = path;
 
-    if (!g_spawn_async_with_pipes (NULL, my_argv, NULL,
+    if (!g_spawn_async_with_pipes (NULL, argv, NULL,
                                    G_SPAWN_SEARCH_PATH, NULL, NULL,
                                    NULL, NULL, &ystdout, NULL, &err)) {
         /* We failed to run the man program. Return a "Huh?" error. */
         *error = g_error_new (YELP_ERROR, YELP_ERROR_UNKNOWN,
                               "%s", err->message);
         g_error_free (err);
-        g_strfreev (my_argv);
         return NULL;
     }
-
-    g_strfreev (my_argv);
 
     return (GInputStream*) g_unix_input_stream_new (ystdout, TRUE);
 }
@@ -462,7 +459,7 @@ static void
 set_font_register (YelpManParser *parser, guint k, const gchar* name)
 {
     if (k > MAN_FONTS) {
-        g_warning ("Tried to set nonexistant font register %u to %s",
+        g_warning ("Tried to set nonexistant font register %d to %s",
                    k, name);
         return;
     }
@@ -477,7 +474,7 @@ get_font (const YelpManParser *parser)
     if (k > MAN_FONTS ||
         parser->font_registers[k] == NULL) {
 
-        g_warning ("Tried to get nonexistant font register %u", k);
+        g_warning ("Tried to get nonexistant font register %d", k);
 
         return "";
     }
@@ -506,12 +503,10 @@ get_font (const YelpManParser *parser)
 static gboolean
 parser_parse_line (YelpManParser *parser, GError **error)
 {
-    const struct LineParsePair *p;
-
     if (parser->line_no <= 3)
         return parse_prologue_line (parser, error);
 
-    p = line_parsers;
+    const struct LineParsePair *p = line_parsers;
     while (p->handler != NULL) {
         if (g_str_has_prefix (parser->buffer, p->prefix)) {
             return p->handler(parser, error);
@@ -1053,7 +1048,7 @@ right_truncate_common (gchar *dst, const gchar *src)
     dst += len_dst - 1;
     src += len_src - 1;
 
-    while (k > 0) {
+    while (k >= 0) {
         if (*dst != *src) break;
         *dst = '\0';
 
@@ -1383,7 +1378,7 @@ fixup_links (YelpManParser *parser,
     xmlXPathContextPtr context;
     xmlXPathObjectPtr path_obj;
     xmlNodeSetPtr nodeset;
-    gint i;
+    guint i;
 
     context = xmlXPathNewContext (parser->doc);
     g_return_if_fail (context);

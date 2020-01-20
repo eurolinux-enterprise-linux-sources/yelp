@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance  <shaunm@gnome.org>
  */
@@ -44,6 +46,8 @@
 
 #define YELP_NAMESPACE "http://www.gnome.org/yelp/ns"
 
+static void      yelp_transform_init         (YelpTransform           *transform);
+static void      yelp_transform_class_init   (YelpTransformClass      *klass);
 static void      yelp_transform_dispose      (GObject                 *object);
 static void      yelp_transform_finalize     (GObject                 *object);
 static void      yelp_transform_get_property (GObject                 *object,
@@ -56,6 +60,9 @@ static void      yelp_transform_set_property (GObject                 *object,
                                               GParamSpec              *pspec);
 
 static void      transform_run              (YelpTransform           *transform);
+static gboolean  transform_free             (YelpTransform           *transform);
+static void      transform_set_error        (YelpTransform           *transform,
+                                             YelpError               *error);
 
 static gboolean  transform_chunk            (YelpTransform           *transform);
 static gboolean  transform_error            (YelpTransform           *transform);
@@ -85,7 +92,7 @@ enum {
 };
 static gint signals[LAST_SIGNAL] = { 0 };
 
-G_DEFINE_TYPE (YelpTransform, yelp_transform, G_TYPE_OBJECT)
+G_DEFINE_TYPE (YelpTransform, yelp_transform, G_TYPE_OBJECT);
 #define GET_PRIV(object)(G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_TRANSFORM, YelpTransformPrivate))
 
 typedef struct _YelpTransformPrivate YelpTransformPrivate;
@@ -102,7 +109,7 @@ struct _YelpTransformPrivate {
     gchar                 **params;
 
     GThread                *thread;
-    GMutex                  mutex;
+    GMutex                 *mutex;
     GAsyncQueue            *queue;
     GHashTable             *chunks;
 
@@ -118,7 +125,7 @@ static void
 yelp_transform_init (YelpTransform *transform)
 {
     YelpTransformPrivate *priv = GET_PRIV (transform);
-    priv->queue = g_async_queue_new_full (g_free);
+    priv->queue = g_async_queue_new ();
     priv->chunks = g_hash_table_new_full (g_str_hash,
                                           g_str_equal,
                                           g_free,
@@ -128,9 +135,9 @@ yelp_transform_init (YelpTransform *transform)
 static void
 yelp_transform_class_init (YelpTransformClass *klass)
 {
-    GObjectClass *object_class = G_OBJECT_CLASS (klass);
-
     exsltRegisterAll ();
+
+    GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
     object_class->dispose = yelp_transform_dispose;
     object_class->finalize = yelp_transform_finalize;
@@ -161,8 +168,8 @@ yelp_transform_class_init (YelpTransformClass *klass)
     g_object_class_install_property (object_class,
                                      PROP_STYLESHEET,
                                      g_param_spec_string ("stylesheet",
-                                                          "XSLT Stylesheet",
-                                                          "The location of the XSLT stylesheet",
+                                                          N_("XSLT Stylesheet"),
+                                                          N_("The location of the XSLT stylesheet"),
                                                           NULL,
                                                           G_PARAM_CONSTRUCT_ONLY |
                                                           G_PARAM_READWRITE | G_PARAM_STATIC_NAME |
@@ -177,6 +184,9 @@ yelp_transform_dispose (GObject *object)
     debug_print (DB_FUNCTION, "entering\n");
 
     if (priv->queue) {
+        gchar *chunk_id;
+        while ((chunk_id = (gchar *) g_async_queue_try_pop (priv->queue)))
+            g_free (chunk_id);
         g_async_queue_unref (priv->queue);
         priv->queue = NULL;
     }
@@ -214,6 +224,7 @@ static void
 yelp_transform_finalize (GObject *object)
 {
     YelpTransformPrivate *priv = GET_PRIV (object);
+    xsltDocumentPtr xsltdoc;
     GHashTableIter iter;
     gpointer chunk;
 
@@ -228,7 +239,7 @@ yelp_transform_finalize (GObject *object)
     g_hash_table_destroy (priv->chunks);
 
     g_strfreev (priv->params);
-    g_mutex_clear (&priv->mutex);
+    g_mutex_free (priv->mutex);
 
     G_OBJECT_CLASS (yelp_transform_parent_class)->finalize (object);
 }
@@ -293,14 +304,13 @@ yelp_transform_start (YelpTransform       *transform,
     priv->aux = auxiliary;
     priv->params = g_strdupv ((gchar **) params);
 
-    g_mutex_init (&priv->mutex);
-    g_mutex_lock (&priv->mutex);
+    priv->mutex = g_mutex_new ();
+    g_mutex_lock (priv->mutex);
     priv->running = TRUE;
     g_object_ref (transform);
-    priv->thread = g_thread_new ("transform-run",
-                                 (GThreadFunc) transform_run,
-                                 transform);
-    g_mutex_unlock (&priv->mutex);
+    priv->thread = g_thread_create ((GThreadFunc) transform_run,
+                                    transform, FALSE, NULL);
+    g_mutex_unlock (priv->mutex);
 
     return TRUE;
 }
@@ -312,13 +322,13 @@ yelp_transform_take_chunk (YelpTransform *transform,
     YelpTransformPrivate *priv = GET_PRIV (transform);
     gchar *buf;
 
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
 
     buf = g_hash_table_lookup (priv->chunks, chunk_id);
     if (buf)
         g_hash_table_remove (priv->chunks, chunk_id);
 
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
 
     /* The caller assumes ownership of this memory. */
     return buf;
@@ -328,13 +338,13 @@ void
 yelp_transform_cancel (YelpTransform *transform)
 {
     YelpTransformPrivate *priv = GET_PRIV (transform);
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
     if (priv->running) {
         priv->cancelled = TRUE;
         if (priv->context)
             priv->context->state = XSLT_STATE_STOPPED;
     }
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
 }
 
 GError *
@@ -343,10 +353,10 @@ yelp_transform_get_error (YelpTransform *transform)
     YelpTransformPrivate *priv = GET_PRIV (transform);
     GError *ret = NULL;
 
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
     if (priv->error)
         ret = g_error_copy (priv->error);
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
 
     return ret;
 }
@@ -362,7 +372,7 @@ transform_run (YelpTransform *transform)
 
     priv->stylesheet = xsltParseStylesheetFile (BAD_CAST (priv->stylesheet_file));
     if (priv->stylesheet == NULL) {
-        g_mutex_lock (&priv->mutex);
+        g_mutex_lock (priv->mutex);
         if (priv->error)
             g_error_free (priv->error);
         priv->error = g_error_new (YELP_ERROR, YELP_ERROR_PROCESSING,
@@ -370,14 +380,14 @@ transform_run (YelpTransform *transform)
                                    priv->stylesheet_file);
         g_object_ref (transform);
         g_idle_add ((GSourceFunc) transform_error, transform);
-        g_mutex_unlock (&priv->mutex);
+        g_mutex_unlock (priv->mutex);
         return;
     }
 
     priv->context = xsltNewTransformContext (priv->stylesheet,
                                              priv->input);
     if (priv->context == NULL) {
-        g_mutex_lock (&priv->mutex);
+        g_mutex_lock (priv->mutex);
         if (priv->error)
             g_error_free (priv->error);
         priv->error = g_error_new (YELP_ERROR, YELP_ERROR_PROCESSING,
@@ -385,7 +395,7 @@ transform_run (YelpTransform *transform)
                                    priv->stylesheet_file);
         g_object_ref (transform);
         g_idle_add ((GSourceFunc) transform_error, transform);
-        g_mutex_unlock (&priv->mutex);
+        g_mutex_unlock (priv->mutex);
         return;
     }
 
@@ -408,14 +418,14 @@ transform_run (YelpTransform *transform)
                                             (const char **) priv->params,
                                             NULL, NULL,
                                             priv->context);
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
     priv->running = FALSE;
     if (!priv->cancelled) {
         g_idle_add ((GSourceFunc) transform_final, transform);
-        g_mutex_unlock (&priv->mutex);
+        g_mutex_unlock (priv->mutex);
     }
     else {
-        g_mutex_unlock (&priv->mutex);
+        g_mutex_unlock (priv->mutex);
         g_object_unref (transform);
     }
 }
@@ -551,7 +561,7 @@ xslt_yelp_document (xsltTransformContextPtr ctxt,
     ctxt->output     = old_doc;
     ctxt->insert     = old_insert;
 
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
 
     temp = g_strdup ((gchar *) page_id);
     xmlFree (page_id);
@@ -562,7 +572,7 @@ xslt_yelp_document (xsltTransformContextPtr ctxt,
     g_object_ref (transform);
     g_idle_add ((GSourceFunc) transform_chunk, transform);
 
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
 
  done:
     if (new_doc)

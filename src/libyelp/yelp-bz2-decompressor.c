@@ -14,7 +14,9 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General
- * Public License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * Public License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -126,6 +128,7 @@ yelp_bz2_decompressor_convert (GConverter *converter,
                                GError    **error)
 {
     YelpBz2Decompressor *decompressor;
+    gsize header_size;
     int res;
 
     decompressor = YELP_BZ2_DECOMPRESSOR (converter);

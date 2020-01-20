@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance  <shaunm@gnome.org>
  */
@@ -56,9 +58,11 @@ struct _YelpSimpleDocumentPriv {
 
 #define BUFFER_SIZE 4096
 
-G_DEFINE_TYPE (YelpSimpleDocument, yelp_simple_document, YELP_TYPE_DOCUMENT)
+G_DEFINE_TYPE (YelpSimpleDocument, yelp_simple_document, YELP_TYPE_DOCUMENT);
 #define GET_PRIV(object) (G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_SIMPLE_DOCUMENT, YelpSimpleDocumentPriv))
 
+static void           yelp_simple_document_class_init  (YelpSimpleDocumentClass *klass);
+static void           yelp_simple_document_init        (YelpSimpleDocument      *document);
 static void           yelp_simple_document_dispose     (GObject                 *object);
 static void           yelp_simple_document_finalize    (GObject                 *object);
 
@@ -66,8 +70,7 @@ static gboolean       document_request_page            (YelpDocument            
 							const gchar             *page_id,
 							GCancellable            *cancellable,
 							YelpDocumentCallback     callback,
-							gpointer                 user_data,
-							GDestroyNotify           notify);
+							gpointer                 user_data);
 static const gchar *  document_read_contents           (YelpDocument            *document,
 							const gchar             *page_id);
 static void           document_finish_read             (YelpDocument            *document,
@@ -165,10 +168,14 @@ YelpDocument *
 yelp_simple_document_new (YelpUri *uri)
 {
     YelpSimpleDocument *document;
+    gchar *doc_uri;
 
+    doc_uri = yelp_uri_get_document_uri (uri);
     document = (YelpSimpleDocument *) g_object_new (YELP_TYPE_SIMPLE_DOCUMENT,
-                                                    "document-uri", uri,
+                                                    "document-uri", doc_uri,
                                                     NULL);
+    g_free (doc_uri);
+
     document->priv->file = yelp_uri_get_file (uri);
     document->priv->page_id = yelp_uri_get_page_id (uri);
 
@@ -182,8 +189,7 @@ document_request_page (YelpDocument         *document,
 		       const gchar          *page_id,
 		       GCancellable         *cancellable,
 		       YelpDocumentCallback  callback,
-		       gpointer              user_data,
-		       GDestroyNotify        notify)
+		       gpointer              user_data)
 {
     YelpSimpleDocument *simple = YELP_SIMPLE_DOCUMENT (document);
     Request *request;
@@ -407,6 +413,8 @@ stream_close_cb (GInputStream       *stream,
 		 GAsyncResult       *result,
 		 YelpSimpleDocument *document)
 {
+    GSList *cur;
+
     document->priv->finished = TRUE;
     document_signal_all (document);
 }

@@ -14,7 +14,9 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General
- * Public License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * Public License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -166,8 +168,6 @@ yelp_magic_decompressor_convert (GConverter *converter,
     *bytes_read = txfer_size;
     *bytes_written = txfer_size;
     
-    if (flags & G_CONVERTER_INPUT_AT_END)
-        return G_CONVERTER_FINISHED;
     return G_CONVERTER_CONVERTED;
 }
 

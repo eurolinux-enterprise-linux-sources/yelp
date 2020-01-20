@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org
  */
@@ -41,11 +43,12 @@ main (int argc, char **argv)
         return 1;
     }
 
+    g_type_init ();
+
     file = g_file_new_for_path (argv[1]);
     file_stream = g_file_read (file, NULL, NULL);
-    converter = G_CONVERTER (yelp_magic_decompressor_new ());
-    stream = g_converter_input_stream_new (G_INPUT_STREAM (file_stream),
-                                           converter);
+    converter = yelp_magic_decompressor_new ();
+    stream = g_converter_input_stream_new (file_stream, converter);
 
     while ((bytes = g_input_stream_read (stream, buf, 1024, NULL, NULL)) > 0) {
         gchar *out = g_strndup (buf, bytes);

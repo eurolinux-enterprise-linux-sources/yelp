@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Davyd Madeley <davyd@madeley.id.au>
  */
@@ -33,9 +35,7 @@ enum {
 };
 
 
-G_GNUC_INTERNAL
 GtkTreeStore          *yelp_info_parser_parse_file  (char           *file);
-G_GNUC_INTERNAL
 xmlDocPtr	       yelp_info_parser_parse_tree  (GtkTreeStore   *tree);
 
 #endif /* __YELP_INFO_PARSER_H__ */

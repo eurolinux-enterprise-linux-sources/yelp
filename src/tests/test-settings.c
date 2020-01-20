@@ -13,18 +13,20 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance  <shaunm@gnome.org>
  */
 
 #include <gtk/gtk.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 #include "yelp-settings.h"
 
 static YelpSettings *settings;
-static WebKitSettings *websettings;
+static WebKitWebSettings *websettings;
 static GtkWidget *webview;
 static GtkWidget *color_table;
 static GtkWidget *color_buttons[YELP_SETTINGS_NUM_COLORS];
@@ -33,43 +35,43 @@ static GtkWidget *icon_choosers[YELP_SETTINGS_NUM_ICONS];
 static GtkWidget *icon_images[YELP_SETTINGS_NUM_ICONS];
 static GtkWidget *font_choosers[YELP_SETTINGS_NUM_FONTS];
 
-#define FORMAT_TMPL "<html><head>" \
-    "<style>" \
-    "body { background-color: %s; color: %s; }" \
-    "div, pre {" \
-    "  margin: 0.5em; padding: 0.2em;" \
-    "  border: solid 3px %s;" \
-    "}" \
-    "</style>" \
-    "</head><body>" \
-    "<pre>SOME\nMONOSPACE\nTEXT</pre>" \
-    "<div><table>" \
-    "<tr><td>YELP_SETTINGS_COLOR_BASE:</td><td>%s</td></tr>" \
-    "<tr style='color: %s'><td>YELP_SETTINGS_COLOR_TEXT:</td><td>%s</td></tr>" \
-    "<tr style='color: %s'><td>YELP_SETTINGS_COLOR_TEXT_LIGHT:</td><td>%s</td></tr>" \
-    "<tr style='color: %s'><td>YELP_SETTINGS_COLOR_LINK:</td><td>%s</td></tr>" \
-    "<tr style='color: %s'><td>YELP_SETTINGS_COLOR_LINK_VISITED:</td><td>%s</td></tr>" \
-    "</table></div>" \
-    "<div style='background-color:%s;border-color:%s'>" \
-    "<table><tr><td>YELP_SETTINGS_COLOR_GRAY_BASE:</td><td>%s</td></tr>" \
-    "<tr><td>YELP_SETTINGS_COLOR_GRAY_BORDER:</td><td>%s</tr></table></div>" \
-    "<div style='background-color:%s;border-color:%s'>" \
-    "<table><tr><td>YELP_SETTINGS_COLOR_BLUE_BASE:</td><td>%s</td></tr>" \
-    "<tr><td>YELP_SETTINGS_COLOR_BLUE_BORDER:</td><td>%s</tr></table></div>" \
-    "<div style='background-color:%s;border-color:%s'>" \
-    "<table><tr><td>YELP_SETTINGS_COLOR_RED_BASE:</td><td>%s</td></tr>" \
-    "<tr><td>YELP_SETTINGS_COLOR_RED_BORDER:</td><td>%s</tr></table></div>" \
-    "<div style='background-color:%s;border-color:%s'>" \
-    "<table><tr><td>YELP_SETTINGS_COLOR_YELLOW_BASE:</td><td>%s</td></tr>" \
-    "<tr><td>YELP_SETTINGS_COLOR_YELLOW_BORDER:</td><td>%s</tr></table></div>" \
-    "</body></html>"
-
 static void
-colors_changed (YelpSettings *unused_settings, gpointer user_data)
+colors_changed (YelpSettings *settings, gpointer user_data)
 {
+    static const gchar *tmpl =
+	"<html><head>"
+	"<style>"
+	"body { background-color: %s; color: %s; }"
+	"div, pre {"
+	"  margin: 0.5em; padding: 0.2em;"
+	"  border: solid 3px %s;"
+	"}"
+	"</style>"
+	"</head><body>"
+	"<pre>SOME\nMONOSPACE\nTEXT</pre>"
+	"<div><table>"
+	"<tr><td>YELP_SETTINGS_COLOR_BASE:</td><td>%s</td></tr>"
+	"<tr style='color: %s'><td>YELP_SETTINGS_COLOR_TEXT:</td><td>%s</td></tr>"
+	"<tr style='color: %s'><td>YELP_SETTINGS_COLOR_TEXT_LIGHT:</td><td>%s</td></tr>"
+	"<tr style='color: %s'><td>YELP_SETTINGS_COLOR_LINK:</td><td>%s</td></tr>"
+	"<tr style='color: %s'><td>YELP_SETTINGS_COLOR_LINK_VISITED:</td><td>%s</td></tr>"
+	"</table></div>"
+	"<div style='background-color:%s;border-color:%s'>"
+	"<table><tr><td>YELP_SETTINGS_COLOR_GRAY_BASE:</td><td>%s</td></tr>"
+	"<tr><td>YELP_SETTINGS_COLOR_GRAY_BORDER:</td><td>%s</tr></table></div>"
+	"<div style='background-color:%s;border-color:%s'>"
+	"<table><tr><td>YELP_SETTINGS_COLOR_BLUE_BASE:</td><td>%s</td></tr>"
+	"<tr><td>YELP_SETTINGS_COLOR_BLUE_BORDER:</td><td>%s</tr></table></div>"
+	"<div style='background-color:%s;border-color:%s'>"
+	"<table><tr><td>YELP_SETTINGS_COLOR_RED_BASE:</td><td>%s</td></tr>"
+	"<tr><td>YELP_SETTINGS_COLOR_RED_BORDER:</td><td>%s</tr></table></div>"
+	"<div style='background-color:%s;border-color:%s'>"
+	"<table><tr><td>YELP_SETTINGS_COLOR_YELLOW_BASE:</td><td>%s</td></tr>"
+	"<tr><td>YELP_SETTINGS_COLOR_YELLOW_BORDER:</td><td>%s</tr></table></div>"
+	"</body></html>";
     gchar **colors = yelp_settings_get_colors (settings);
     gchar *page;
-    page = g_strdup_printf (FORMAT_TMPL,
+    page = g_strdup_printf (tmpl,
 			    colors[YELP_SETTINGS_COLOR_BASE], colors[YELP_SETTINGS_COLOR_TEXT],
 			    colors[YELP_SETTINGS_COLOR_BASE], colors[YELP_SETTINGS_COLOR_BASE],
 			    colors[YELP_SETTINGS_COLOR_TEXT], colors[YELP_SETTINGS_COLOR_TEXT],
@@ -84,15 +86,17 @@ colors_changed (YelpSettings *unused_settings, gpointer user_data)
 			    colors[YELP_SETTINGS_COLOR_RED_BASE], colors[YELP_SETTINGS_COLOR_RED_BORDER],
 			    colors[YELP_SETTINGS_COLOR_YELLOW_BASE], colors[YELP_SETTINGS_COLOR_YELLOW_BORDER],
 			    colors[YELP_SETTINGS_COLOR_YELLOW_BASE], colors[YELP_SETTINGS_COLOR_YELLOW_BORDER]);
-    webkit_web_view_load_html (WEBKIT_WEB_VIEW (webview),
-                               page,
-                               "file:///dev/null");
+    webkit_web_view_load_string (WEBKIT_WEB_VIEW (webview),
+                                 page,
+                                 "text/html",
+                                 "UTF-8",
+                                 "file:///dev/null");
     g_free (page);
     g_strfreev (colors);
 }
 
 static void
-icons_changed (YelpSettings *unused_settings, gpointer user_data)
+icons_changed (YelpSettings *settings, gpointer user_data)
 {
     gint i;
     for (i = 0; i < YELP_SETTINGS_NUM_ICONS; i++) {
@@ -105,7 +109,7 @@ icons_changed (YelpSettings *unused_settings, gpointer user_data)
 }
 
 static void
-fonts_changed (YelpSettings *unused_settings, gpointer user_data)
+fonts_changed (YelpSettings *settings, gpointer user_data)
 {
     g_object_set (websettings,
 		  "default-font-family", yelp_settings_get_font_family (settings, YELP_SETTINGS_FONT_VARIABLE),
@@ -119,7 +123,7 @@ static void
 color_set (GtkColorButton *button,
 	   gpointer        user_data)
 {
-    GdkRGBA rgba;
+    GdkColor color;
     gchar str[8];
     gint i;
     for (i = 0; i < YELP_SETTINGS_NUM_COLORS; i++)
@@ -127,11 +131,8 @@ color_set (GtkColorButton *button,
 	    break;
     g_return_if_fail (i < YELP_SETTINGS_NUM_COLORS);
 
-    gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER (button), &rgba);
-    g_snprintf (str, 8, "#%02X%02X%02X",
-                (guint)(0.5 + CLAMP (rgba.red, 0., 1.) * 255),
-                (guint)(0.5 + CLAMP (rgba.green, 0., 1.) * 255),
-                (guint)(0.5 + CLAMP (rgba.blue, 0., 1.) * 255));
+    gtk_color_button_get_color (button, &color);
+    g_snprintf (str, 8, "#%02X%02X%02X", color.red / 255, color.green / 255, color.blue / 255);
     yelp_settings_set_colors (settings, i, str, -1);
 }
 
@@ -214,11 +215,11 @@ main (int argc, char **argv)
     gtk_window_set_default_size (GTK_WINDOW (window), 1024, 600);
     g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
-    hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 12);
+    hbox = gtk_hbox_new (FALSE, 12);
     g_object_set (hbox, "border-width", 6, NULL);
     gtk_container_add (GTK_CONTAINER (window), hbox);
 
-    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 6);
+    vbox = gtk_vbox_new (FALSE, 6);
     gtk_box_pack_start (GTK_BOX (hbox), vbox, TRUE, TRUE, 0);
 
     widget = gtk_check_button_new_with_label ("Use GtkSettings");
@@ -226,7 +227,7 @@ main (int argc, char **argv)
     g_signal_connect (widget, "toggled", G_CALLBACK (use_gtk_settings_toggled), NULL);
     gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE, FALSE, 0);
 
-    color_table = gtk_grid_new ();
+    color_table = gtk_table_new (2, 7, TRUE);
     gtk_widget_set_sensitive (color_table, FALSE);
     gtk_box_pack_start (GTK_BOX (vbox), color_table, FALSE, FALSE, 0);
 
@@ -234,15 +235,16 @@ main (int argc, char **argv)
 	color_buttons[i] = gtk_color_button_new ();
 	g_signal_connect (color_buttons[i], "color-set", G_CALLBACK (color_set), NULL);
 	if (i == 0) {
-            gtk_grid_attach (GTK_GRID (color_table), color_buttons[i],
-                             0, 0, 1, 2);
+	    gtk_table_attach (GTK_TABLE (color_table), color_buttons[i],
+			      0, 1, 0, 2, 0, GTK_FILL, 0, 0);
 	}
 	else {
-	    gtk_grid_attach (GTK_GRID (color_table), color_buttons[i],
-			     (i + 1) / 2,
-			     (i + 1) % 2,
-			     1,
-			     1);
+	    gtk_table_attach (GTK_TABLE (color_table), color_buttons[i],
+			      (i + 1) / 2,
+			      (i + 1) / 2 + 1,
+			      (i + 1) % 2, 
+			      (i + 1) % 2 + 1,
+			      0, 0, 0, 0);
 	}
     }
 
@@ -257,33 +259,33 @@ main (int argc, char **argv)
     websettings = webkit_web_view_get_settings (WEBKIT_WEB_VIEW (webview));
     gtk_container_add (GTK_CONTAINER (scroll), webview);
 
-    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 6);
+    vbox = gtk_vbox_new (FALSE, 6);
     gtk_box_pack_start (GTK_BOX (hbox), vbox, TRUE, TRUE, 0);
 
-    table = gtk_grid_new ();
+    table = gtk_table_new (2, 2, FALSE);
     gtk_box_pack_start (GTK_BOX (vbox), table, FALSE, FALSE, 0);
 
     widget = gtk_label_new ("Variable");
     g_object_set (widget, "xalign", 0.0, NULL);
-    gtk_grid_attach (GTK_GRID (table), widget, 0, 0, 1, 1);
+    gtk_table_attach (GTK_TABLE (table), widget, 0, 1, 0, 1, GTK_FILL, 0, 0, 0);
     font_choosers[YELP_SETTINGS_FONT_VARIABLE] = gtk_font_button_new ();
     g_signal_connect (font_choosers[YELP_SETTINGS_FONT_VARIABLE], "notify::font-name",
 		      G_CALLBACK (font_set), NULL);
     gtk_font_button_set_font_name (GTK_FONT_BUTTON (font_choosers[YELP_SETTINGS_FONT_VARIABLE]),
 				   "Sans 8");
-    gtk_grid_attach (GTK_GRID (table), font_choosers[YELP_SETTINGS_FONT_VARIABLE],
-                     1, 0, 1, 1);
+    gtk_table_attach (GTK_TABLE (table), font_choosers[YELP_SETTINGS_FONT_VARIABLE],
+		      1, 2, 0, 1, GTK_FILL | GTK_EXPAND, 0, 6, 0);
 
     widget = gtk_label_new ("Fixed");
     g_object_set (widget, "xalign", 0.0, NULL);
-    gtk_grid_attach (GTK_GRID (table), widget, 0, 1, 1, 1);
+    gtk_table_attach (GTK_TABLE (table), widget, 0, 1, 1, 2, GTK_FILL, 0, 0, 0);
     font_choosers[YELP_SETTINGS_FONT_FIXED] = gtk_font_button_new ();
     g_signal_connect (font_choosers[YELP_SETTINGS_FONT_FIXED], "notify::font-name",
 		      G_CALLBACK (font_set), NULL);
     gtk_font_button_set_font_name (GTK_FONT_BUTTON (font_choosers[YELP_SETTINGS_FONT_FIXED]),
 				   "Monospace 8");
-    gtk_grid_attach (GTK_GRID (table), font_choosers[YELP_SETTINGS_FONT_FIXED],
-                     1, 1, 1, 1);
+    gtk_table_attach (GTK_TABLE (table), font_choosers[YELP_SETTINGS_FONT_FIXED],
+		      1, 2, 1, 2, GTK_FILL | GTK_EXPAND, 0, 6, 0);
 
     widget = gtk_check_button_new_with_label ("Use GtkIconTheme");
     g_object_set (widget, "active", TRUE, NULL);
@@ -294,24 +296,24 @@ main (int argc, char **argv)
     g_signal_connect (widget, "toggled", G_CALLBACK (use_small_icons_toggled), NULL);
     gtk_box_pack_start (GTK_BOX (vbox), widget, FALSE, FALSE, 0);
 
-    icon_table = gtk_grid_new ();
+    icon_table = gtk_table_new (6, 2, FALSE);
     gtk_widget_set_sensitive (icon_table, FALSE);
     gtk_box_pack_start (GTK_BOX (vbox), icon_table, FALSE, FALSE, 0);
 
     for (i = 0; i < YELP_SETTINGS_NUM_ICONS; i++) {
 	const gchar *labels[YELP_SETTINGS_NUM_ICONS] =
-	    {"BUG", "IMPORTANT", "NOTE", "TIP", "WARNING"};
+	    {"BUG", "CAUTION", "IMPORTANT", "NOTE", "TIP", "WARNING"};
 	widget = gtk_label_new (labels[i]);
 	g_object_set (widget, "xalign", 0.0, NULL);
-	gtk_grid_attach (GTK_GRID (icon_table), widget, 0, i, 1, 1);
+	gtk_table_attach (GTK_TABLE (icon_table), widget,
+			  0, 1, i, i + 1, GTK_FILL, 0, 0, 0);
 	icon_choosers[i] = gtk_file_chooser_button_new (labels[i], GTK_FILE_CHOOSER_ACTION_OPEN);
-	gtk_grid_attach (GTK_GRID (icon_table), icon_choosers[i],
-			 1, i, 2, 1);
+	gtk_table_attach (GTK_TABLE (icon_table), icon_choosers[i],
+			  1, 2, i, i + 1, GTK_FILL | GTK_EXPAND, GTK_FILL, 6, 0);
 	g_signal_connect (icon_choosers[i], "file-set", G_CALLBACK (icon_file_set), NULL);
     }
 
-    hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 6);
-    gtk_box_set_homogeneous (GTK_BOX (hbox), TRUE);
+    hbox = gtk_hbox_new (TRUE, 6);
     gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
     for (i = 0; i < YELP_SETTINGS_NUM_ICONS; i++) {
 	icon_images[i] = gtk_image_new ();
@@ -328,6 +330,4 @@ main (int argc, char **argv)
     gtk_widget_show_all (GTK_WIDGET (window));
 
     gtk_main ();
-
-    return 0;
 }

@@ -14,7 +14,9 @@
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General
- * Public License along with this library; if not, see <http://www.gnu.org/licenses/>.
+ * Public License along with this library; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -41,10 +43,8 @@ struct _YelpMagicDecompressorClass
     GObjectClass parent_class;
 };
 
-G_GNUC_INTERNAL
 GType                 yelp_magic_decompressor_get_type (void);
 
-G_GNUC_INTERNAL
 YelpMagicDecompressor *yelp_magic_decompressor_new (void);
 
 G_END_DECLS

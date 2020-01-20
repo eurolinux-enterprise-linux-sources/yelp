@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance  <shaunm@gnome.org>
  */
@@ -51,7 +53,6 @@ struct _Request {
     GCancellable         *cancellable;
     YelpDocumentCallback  callback;
     gpointer              user_data;
-    GDestroyNotify        notify;
     GError               *error;
 
     gint                  idle_funcs;
@@ -65,7 +66,7 @@ struct _Hash {
 };
 
 struct _YelpDocumentPriv {
-    GMutex  mutex;
+    GMutex *mutex;
 
     GSList *reqs_all;         /* Holds canonical refs, only free from here */
     Hash   *reqs_by_page_id;  /* Indexed by page ID, contains GSList */
@@ -74,8 +75,7 @@ struct _YelpDocumentPriv {
     GSList *reqs_search;      /* Pending search requests, not in reqs_all */
     gboolean indexed;
 
-    YelpUri *uri;
-    gchar   *doc_uri;
+    gchar  *doc_uri;
 
     /* Real page IDs map to themselves, so this list doubles
      * as a list of all valid page IDs.
@@ -96,10 +96,12 @@ struct _YelpDocumentPriv {
     GError *idle_error;
 };
 
-G_DEFINE_TYPE (YelpDocument, yelp_document, G_TYPE_OBJECT)
+G_DEFINE_TYPE (YelpDocument, yelp_document, G_TYPE_OBJECT);
 
 #define GET_PRIV(object) (G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_DOCUMENT, YelpDocumentPriv))
 
+static void           yelp_document_class_init  (YelpDocumentClass    *klass);
+static void           yelp_document_init        (YelpDocument         *document);
 static void           yelp_document_dispose     (GObject              *object);
 static void           yelp_document_finalize    (GObject              *object);
 static void           document_get_property     (GObject              *object,
@@ -114,9 +116,8 @@ static gboolean       document_request_page     (YelpDocument         *document,
                                                  const gchar          *page_id,
                                                  GCancellable         *cancellable,
                                                  YelpDocumentCallback  callback,
-                                                 gpointer              user_data,
-                                                 GDestroyNotify        notify);
-static gboolean       document_indexed          (YelpDocument         *document);
+                                                 gpointer              user_data);
+static void           document_indexed          (YelpDocument         *document);
 static const gchar *  document_read_contents    (YelpDocument         *document,
                                                  const gchar          *page_id);
 static void           document_finish_read      (YelpDocument         *document,
@@ -152,25 +153,15 @@ static void           request_free              (Request              *request);
 static const gchar *  str_ref                   (const gchar          *str);
 static void           str_unref                 (const gchar          *str);
 
-static GMutex str_mutex;
-static GHashTable  *str_refs  = NULL;
-static GHashTable *documents = NULL;
+GStaticMutex str_mutex = G_STATIC_MUTEX_INIT;
+GHashTable  *str_refs  = NULL;
 
 /******************************************************************************/
 
 YelpDocument *
-yelp_document_lookup_document_uri (const gchar *docuri)
-{
-    if (!documents)
-        return NULL;
-
-    return g_hash_table_lookup (documents, docuri);
-}
-
-YelpDocument *
 yelp_document_get_for_uri (YelpUri *uri)
 {
-    YelpUriDocumentType doctype;
+    static GHashTable *documents = NULL;
     gchar *docuri = NULL;
     gchar *page_id, *tmp;
     YelpDocument *document = NULL;
@@ -181,11 +172,10 @@ yelp_document_get_for_uri (YelpUri *uri)
 
     g_return_val_if_fail (yelp_uri_is_resolved (uri), NULL);
 
-    doctype = yelp_uri_get_document_type (uri);
-
-    if (doctype == YELP_URI_DOCUMENT_TYPE_TEXT ||
-        doctype == YELP_URI_DOCUMENT_TYPE_HTML ||
-        doctype == YELP_URI_DOCUMENT_TYPE_XHTML) {
+    switch (yelp_uri_get_document_type (uri)) {
+    case YELP_URI_DOCUMENT_TYPE_TEXT:
+    case YELP_URI_DOCUMENT_TYPE_HTML:
+    case YELP_URI_DOCUMENT_TYPE_XHTML:
         /* We use YelpSimpleDocument for these, which is a single-file
          * responder. But the document URI may be set to the directory
          * holding the file, to allow a directory of HTML files to act
@@ -197,15 +187,16 @@ yelp_document_get_for_uri (YelpUri *uri)
         g_free (docuri);
         g_free (page_id);
         docuri = tmp;
-    }
-    else if (doctype == YELP_URI_DOCUMENT_TYPE_MAN) {
+        break;
+    case YELP_URI_DOCUMENT_TYPE_MAN:
         /* The document URI for man pages is just man:, so we use the
          * full canonical URI to look these up.
          */
         docuri = yelp_uri_get_canonical_uri (uri);
-    }
-    else {
+        break;
+    default:
         docuri = yelp_uri_get_document_uri (uri);
+        break;
     }
 
     if (docuri == NULL)
@@ -242,9 +233,6 @@ yelp_document_get_for_uri (YelpUri *uri)
     case YELP_URI_DOCUMENT_TYPE_EXTERNAL:
     case YELP_URI_DOCUMENT_TYPE_ERROR:
         break;
-    case YELP_URI_DOCUMENT_TYPE_UNRESOLVED:
-    default:
-        g_assert_not_reached ();
     }
 
     if (document != NULL) {
@@ -277,18 +265,18 @@ yelp_document_class_init (YelpDocumentClass *klass)
     g_object_class_install_property (object_class,
                                      PROP_INDEXED,
                                      g_param_spec_boolean ("indexed",
-                                                           "Indexed",
-                                                           "Whether the document content has been indexed",
+                                                           N_("Indexed"),
+                                                           N_("Whether the document content has been indexed"),
                                                            FALSE,
                                                            G_PARAM_CONSTRUCT | G_PARAM_READWRITE |
                                                            G_PARAM_STATIC_STRINGS));
 
     g_object_class_install_property (object_class,
                                      PROP_URI,
-                                     g_param_spec_object ("document-uri",
-                                                          "Document URI",
-                                                          "The URI which identifies the document",
-                                                          YELP_TYPE_URI,
+                                     g_param_spec_string ("document-uri",
+                                                          N_("Document URI"),
+                                                          N_("The URI which identifies the document"),
+                                                          NULL,
                                                           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE |
                                                           G_PARAM_STATIC_STRINGS));
 
@@ -302,7 +290,7 @@ yelp_document_init (YelpDocument *document)
 
     document->priv = priv = GET_PRIV (document);
 
-    g_mutex_init (&priv->mutex);
+    priv->mutex = g_mutex_new ();
 
     priv->reqs_by_page_id = hash_new ((GDestroyNotify) g_slist_free);
     priv->reqs_all = NULL;
@@ -352,9 +340,6 @@ yelp_document_finalize (GObject *object)
 {
     YelpDocument *document = YELP_DOCUMENT (object);
 
-    g_clear_object (&document->priv->uri);
-    g_free (document->priv->doc_uri);
-
     g_slist_free (document->priv->reqs_pending);
     hash_free (document->priv->reqs_by_page_id);
 
@@ -373,7 +358,7 @@ yelp_document_finalize (GObject *object)
 
     g_hash_table_destroy (document->priv->core_ids);
 
-    g_mutex_clear (&document->priv->mutex);
+    g_mutex_free (document->priv->mutex);
 
     G_OBJECT_CLASS (yelp_document_parent_class)->finalize (object);
 }
@@ -391,7 +376,7 @@ document_get_property (GObject      *object,
         g_value_set_boolean (value, document->priv->indexed);
         break;
     case PROP_URI:
-        g_value_set_object (value, document->priv->uri);
+        g_value_set_string (value, document->priv->doc_uri);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -414,9 +399,9 @@ document_set_property (GObject      *object,
             g_idle_add ((GSourceFunc) document_indexed, document);
         break;
     case PROP_URI:
-        document->priv->uri = g_value_dup_object (value);
-        if (document->priv->uri)
-            document->priv->doc_uri = yelp_uri_get_document_uri (document->priv->uri);
+        if (document->priv->doc_uri != NULL)
+            g_free (document->priv->doc_uri);
+        document->priv->doc_uri = g_value_dup_string (value);
         break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -425,14 +410,6 @@ document_set_property (GObject      *object,
 }
 
 /******************************************************************************/
-
-YelpUri *
-yelp_document_get_uri (YelpDocument *document)
-{
-    g_assert (document != NULL && YELP_IS_DOCUMENT (document));
-
-    return document->priv->uri;
-}
 
 gchar **
 yelp_document_list_page_ids (YelpDocument *document)
@@ -443,7 +420,7 @@ yelp_document_list_page_ids (YelpDocument *document)
 
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
 
     lst = g_hash_table_get_keys (document->priv->core_ids);
     ret = g_new0 (gchar *, g_list_length (lst) + 1);
@@ -454,7 +431,7 @@ yelp_document_list_page_ids (YelpDocument *document)
     }
     g_list_free (lst);
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -470,12 +447,12 @@ yelp_document_get_page_id (YelpDocument *document,
     if (id != NULL && g_str_has_prefix (id, "search="))
         return g_strdup (id);
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     ret = hash_lookup (document->priv->page_ids, id);
     if (ret)
 	ret = g_strdup (ret);
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -487,7 +464,7 @@ yelp_document_set_page_id (YelpDocument *document,
 {
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
 
     hash_replace (document->priv->page_ids, id, g_strdup (page_id));
 
@@ -514,7 +491,7 @@ yelp_document_set_page_id (YelpDocument *document,
         }
     }
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
 gchar *
@@ -525,7 +502,7 @@ yelp_document_get_root_id (YelpDocument *document,
 
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     if (page_id != NULL && g_str_has_prefix (page_id, "search="))
         real = hash_lookup (document->priv->page_ids, NULL);
     else
@@ -535,7 +512,7 @@ yelp_document_get_root_id (YelpDocument *document,
 	if (ret)
 	    ret = g_strdup (ret);
     }
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -547,9 +524,9 @@ yelp_document_set_root_id (YelpDocument *document,
 {
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     hash_replace (document->priv->root_ids, page_id, g_strdup (root_id));
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
 gchar *
@@ -560,14 +537,14 @@ yelp_document_get_prev_id (YelpDocument *document,
 
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     real = hash_lookup (document->priv->page_ids, page_id);
     if (real) {
 	ret = hash_lookup (document->priv->prev_ids, real);
 	if (ret)
 	    ret = g_strdup (ret);
     }
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -579,9 +556,9 @@ yelp_document_set_prev_id (YelpDocument *document,
 {
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     hash_replace (document->priv->prev_ids, page_id, g_strdup (prev_id));
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
 gchar *
@@ -592,14 +569,14 @@ yelp_document_get_next_id (YelpDocument *document,
 
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     real = hash_lookup (document->priv->page_ids, page_id);
     if (real) {
 	ret = hash_lookup (document->priv->next_ids, real);
 	if (ret)
 	    ret = g_strdup (ret);
     }
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -611,9 +588,9 @@ yelp_document_set_next_id (YelpDocument *document,
 {
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     hash_replace (document->priv->next_ids, page_id, g_strdup (next_id));
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
 gchar *
@@ -624,14 +601,14 @@ yelp_document_get_up_id (YelpDocument *document,
 
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     real = hash_lookup (document->priv->page_ids, page_id);
     if (real) {
 	ret = hash_lookup (document->priv->up_ids, real);
 	if (ret)
 	    ret = g_strdup (ret);
     }
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -643,9 +620,9 @@ yelp_document_set_up_id (YelpDocument *document,
 {
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     hash_replace (document->priv->up_ids, page_id, g_strdup (up_id));
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
 gchar *
@@ -656,7 +633,7 @@ yelp_document_get_root_title (YelpDocument *document,
 
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     if (page_id != NULL && g_str_has_prefix (page_id, "search=")) {
         ret = yelp_storage_get_root_title (yelp_storage_get_default (),
                                            document->priv->doc_uri);
@@ -673,7 +650,7 @@ yelp_document_get_root_title (YelpDocument *document,
         }
     }
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -691,14 +668,14 @@ yelp_document_get_page_title (YelpDocument *document,
         return ret;
     }
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     real = hash_lookup (document->priv->page_ids, page_id);
     if (real) {
 	ret = hash_lookup (document->priv->titles, real);
 	if (ret)
 	    ret = g_strdup (ret);
     }
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -710,9 +687,9 @@ yelp_document_set_page_title (YelpDocument *document,
 {
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     hash_replace (document->priv->titles, page_id, g_strdup (title));
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
 gchar *
@@ -726,14 +703,14 @@ yelp_document_get_page_desc (YelpDocument *document,
     if (page_id != NULL && g_str_has_prefix (page_id, "search="))
         return yelp_document_get_root_title (document, page_id);
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     real = hash_lookup (document->priv->page_ids, page_id);
     if (real) {
 	ret = hash_lookup (document->priv->descs, real);
 	if (ret)
 	    ret = g_strdup (ret);
     }
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -745,9 +722,9 @@ yelp_document_set_page_desc (YelpDocument *document,
 {
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     hash_replace (document->priv->descs, page_id, g_strdup (desc));
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
 gchar *
@@ -761,14 +738,14 @@ yelp_document_get_page_icon (YelpDocument *document,
     if (page_id != NULL && g_str_has_prefix (page_id, "search="))
         return g_strdup ("yelp-page-search-symbolic");
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     real = hash_lookup (document->priv->page_ids, page_id);
     if (real) {
 	ret = hash_lookup (document->priv->icons, real);
 	if (ret)
 	    ret = g_strdup (ret);
     }
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     if (ret == NULL)
         ret = g_strdup ("yelp-page-symbolic");
@@ -783,15 +760,15 @@ yelp_document_set_page_icon (YelpDocument *document,
 {
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     hash_replace (document->priv->icons, page_id, g_strdup (icon));
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
-static gboolean
+static void
 document_indexed (YelpDocument *document)
 {
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     while (document->priv->reqs_search != NULL) {
         Request *request = (Request *) document->priv->reqs_search->data;
         request->idle_funcs++;
@@ -800,9 +777,7 @@ document_indexed (YelpDocument *document)
         document->priv->reqs_search = g_slist_delete_link (document->priv->reqs_search,
                                                            document->priv->reqs_search);
     }
-    g_mutex_unlock (&document->priv->mutex);
-
-    return FALSE;
+    g_mutex_unlock (document->priv->mutex);
 }
 
 /******************************************************************************/
@@ -812,8 +787,7 @@ yelp_document_request_page (YelpDocument         *document,
 			    const gchar          *page_id,
 			    GCancellable         *cancellable,
 			    YelpDocumentCallback  callback,
-			    gpointer              user_data,
-			    GDestroyNotify        notify)
+			    gpointer              user_data)
 {
     g_return_val_if_fail (YELP_IS_DOCUMENT (document), FALSE);
     g_return_val_if_fail (YELP_DOCUMENT_GET_CLASS (document)->request_page != NULL, FALSE);
@@ -824,8 +798,7 @@ yelp_document_request_page (YelpDocument         *document,
 							     page_id,
 							     cancellable,
 							     callback,
-							     user_data,
-							     notify);
+							     user_data);
 }
 
 static gboolean
@@ -833,8 +806,7 @@ document_request_page (YelpDocument         *document,
 		       const gchar          *page_id,
 		       GCancellable         *cancellable,
 		       YelpDocumentCallback  callback,
-		       gpointer              user_data,
-		       GDestroyNotify        notify)
+		       gpointer              user_data)
 {
     Request *request;
     gchar *real_id;
@@ -849,29 +821,23 @@ document_request_page (YelpDocument         *document,
     else
 	request->page_id = g_strdup (page_id);
 
-    if (cancellable) {
-      request->cancellable = g_object_ref (cancellable);
-      g_signal_connect (cancellable, "cancelled",
-              G_CALLBACK (request_cancel), request);
-    }
-    else {
-      request->cancellable = NULL;
-    }
+    request->cancellable = g_object_ref (cancellable);
+    g_signal_connect (cancellable, "cancelled",
+		      G_CALLBACK (request_cancel), request);
 
     request->callback = callback;
     request->user_data = user_data;
-    request->notify = notify;
     request->idle_funcs = 0;
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
 
-    if (page_id && g_str_has_prefix (page_id, "search=")) {
+    if (g_str_has_prefix (page_id, "search=")) {
         document->priv->reqs_search = g_slist_prepend (document->priv->reqs_search, request);
         if (document->priv->indexed)
             g_idle_add ((GSourceFunc) document_indexed, document);
         else
             yelp_document_index (document);
-        g_mutex_unlock (&document->priv->mutex);
+        g_mutex_unlock (document->priv->mutex);
         return TRUE;
     }
 
@@ -893,7 +859,7 @@ document_request_page (YelpDocument         *document,
 	ret = TRUE;
     }
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -901,7 +867,7 @@ document_request_page (YelpDocument         *document,
 void
 yelp_document_clear_contents (YelpDocument *document)
 {
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
 
     if (document->priv->contents->null) {
         str_unref (document->priv->contents->null);
@@ -909,7 +875,7 @@ yelp_document_clear_contents (YelpDocument *document)
     }
     g_hash_table_remove_all (document->priv->contents->hash);
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
 gchar **
@@ -919,7 +885,7 @@ yelp_document_get_requests (YelpDocument *document)
     gchar **ret;
     gint i;
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
 
     reqs = g_hash_table_get_keys (document->priv->reqs_by_page_id->hash);
     ret = g_new0 (gchar*, g_list_length (reqs) + 1);
@@ -928,7 +894,7 @@ yelp_document_get_requests (YelpDocument *document)
     }
     g_list_free (reqs);
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -951,9 +917,7 @@ document_read_contents (YelpDocument *document,
 {
     gchar *real, *str, **colors;
 
-    g_mutex_lock (&document->priv->mutex);
-
-    real = hash_lookup (document->priv->page_ids, page_id);
+    g_mutex_lock (document->priv->mutex);
 
     if (page_id != NULL && g_str_has_prefix (page_id, "search=")) {
         gchar *tmp, *tmp2, *txt;
@@ -961,7 +925,7 @@ document_read_contents (YelpDocument *document,
         GVariantIter *iter;
         gchar *url, *title, *desc, *icon; /* do not free */
         gchar *index_title;
-        GString *ret = g_string_new ("<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><style type='text/css'>");
+        GString *ret = g_string_new ("<html><head><style type='text/css'>");
 
         colors = yelp_settings_get_colors (yelp_settings_get_default ());
         g_string_append_printf (ret,
@@ -1022,7 +986,7 @@ document_read_contents (YelpDocument *document,
         str = hash_lookup (document->priv->contents, real);
         if (str) {
             str_ref (str);
-            g_mutex_unlock (&document->priv->mutex);
+            g_mutex_unlock (document->priv->mutex);
             return (const gchar *) str;
         }
 
@@ -1052,19 +1016,12 @@ document_read_contents (YelpDocument *document,
         }
         else {
             while (g_variant_iter_loop (iter, "(&s&s&s&s)", &url, &title, &desc, &icon)) {
-                gchar *xref_uri = NULL;
-
-                if (g_str_has_prefix (url, document->priv->doc_uri))
-                    xref_uri = g_strdup_printf ("xref:%s", url + strlen (document->priv->doc_uri) + 1);
-
                 tmp = g_markup_printf_escaped ("<div><a class='linkdiv' href='%s'><div class='linkdiv'>"
                                                "<div class='title'>%s</div>"
                                                "<div class='desc'>%s</div>"
                                                "</div></a></div>",
-                                               xref_uri && xref_uri[0] != '\0' ? xref_uri : url,
-                                               title, desc);
+                                               url, title, desc);
                 g_string_append (ret, tmp);
-                g_free (xref_uri);
                 g_free (tmp);
             }
         }
@@ -1079,15 +1036,16 @@ document_read_contents (YelpDocument *document,
         hash_replace (document->priv->contents, page_id, g_string_free (ret, FALSE));
         str = hash_lookup (document->priv->contents, page_id);
         str_ref (str);
-        g_mutex_unlock (&document->priv->mutex);
+        g_mutex_unlock (document->priv->mutex);
         return (const gchar *) str;
     }
 
+    real = hash_lookup (document->priv->page_ids, page_id);
     str = hash_lookup (document->priv->contents, real);
     if (str)
 	str_ref (str);
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return (const gchar *) str;
 }
@@ -1120,7 +1078,7 @@ yelp_document_give_contents (YelpDocument *document,
     debug_print (DB_FUNCTION, "entering\n");
     debug_print (DB_ARG, "    page_id = \"%s\"\n", page_id);
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
 
     hash_replace (document->priv->contents,
                   page_id,
@@ -1130,7 +1088,7 @@ yelp_document_give_contents (YelpDocument *document,
                   page_id,
                   g_strdup (mime));
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
 gchar *
@@ -1149,17 +1107,14 @@ document_get_mime_type (YelpDocument *document,
 {
     gchar *real, *ret = NULL;
 
-    if (page_id != NULL && g_str_has_prefix (page_id, "search="))
-      return g_strdup ("application/xhtml+xml");
-
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
     real = hash_lookup (document->priv->page_ids, page_id);
     if (real) {
 	ret = hash_lookup (document->priv->mime_types, real);
 	if (ret)
 	    ret = g_strdup (ret);
     }
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     return ret;
 }
@@ -1193,7 +1148,7 @@ yelp_document_signal (YelpDocument       *document,
 
     g_return_if_fail (YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
 
     reqs = hash_lookup (document->priv->reqs_by_page_id, page_id);
     for (cur = reqs; cur != NULL; cur = cur->next) {
@@ -1219,7 +1174,7 @@ yelp_document_signal (YelpDocument       *document,
 	}
     }
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
 static gboolean
@@ -1229,7 +1184,7 @@ yelp_document_error_pending_idle (YelpDocument *document)
     GSList *cur;
     Request *request;
 
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
 
     if (priv->reqs_pending) {
 	for (cur = priv->reqs_pending; cur; cur = cur->next) {
@@ -1243,7 +1198,7 @@ yelp_document_error_pending_idle (YelpDocument *document)
 	priv->reqs_pending = NULL;
     }
 
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
 
     g_object_unref (document);
     return FALSE;
@@ -1364,7 +1319,7 @@ request_cancel (GCancellable *cancellable, Request *request)
 
     g_assert (document != NULL && YELP_IS_DOCUMENT (document));
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
 
     document->priv->reqs_pending = g_slist_remove (document->priv->reqs_pending,
 						   (gconstpointer) request);
@@ -1388,7 +1343,7 @@ request_cancel (GCancellable *cancellable, Request *request)
     }
     request_try_free (request);
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 }
 
 static gboolean
@@ -1397,7 +1352,7 @@ request_idle_contents (Request *request)
     YelpDocument *document;
     YelpDocumentPriv *priv;
     YelpDocumentCallback callback = NULL;
-    gpointer user_data;
+    gpointer user_data = user_data;
 
     g_assert (request != NULL && YELP_IS_DOCUMENT (request->document));
 
@@ -1409,7 +1364,7 @@ request_idle_contents (Request *request)
     document = g_object_ref (request->document);
     priv = GET_PRIV (document);
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
 
     priv->reqs_pending = g_slist_remove (priv->reqs_pending, request);
 
@@ -1417,7 +1372,7 @@ request_idle_contents (Request *request)
     user_data = request->user_data;
     request->idle_funcs--;
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     if (callback)
 	callback (document, YELP_DOCUMENT_SIGNAL_CONTENTS, user_data, NULL);
@@ -1442,13 +1397,13 @@ request_idle_info (Request *request)
 
     document = g_object_ref (request->document);
 
-    g_mutex_lock (&document->priv->mutex);
+    g_mutex_lock (document->priv->mutex);
 
     callback = request->callback;
     user_data = request->user_data;
     request->idle_funcs--;
 
-    g_mutex_unlock (&document->priv->mutex);
+    g_mutex_unlock (document->priv->mutex);
 
     if (callback)
 	callback (document, YELP_DOCUMENT_SIGNAL_INFO, user_data, NULL);
@@ -1464,7 +1419,7 @@ request_idle_error (Request *request)
     YelpDocumentPriv *priv;
     YelpDocumentCallback callback = NULL;
     GError *error = NULL;
-    gpointer user_data;
+    gpointer user_data = user_data;
 
     g_assert (request != NULL && YELP_IS_DOCUMENT (request->document));
 
@@ -1476,7 +1431,7 @@ request_idle_error (Request *request)
     document = g_object_ref (request->document);
     priv = GET_PRIV (document);
 
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
 
     if (request->error) {
 	callback = request->callback;
@@ -1486,7 +1441,7 @@ request_idle_error (Request *request)
     }
 
     request->idle_funcs--;
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
 
     if (callback)
 	callback (document,
@@ -1516,9 +1471,6 @@ request_try_free (Request *request)
 static void
 request_free (Request *request)
 {
-    if (request->notify)
-        request->notify (request->user_data);
-
     g_object_unref (request->document);
     g_free (request->page_id);
     g_object_unref (request->cancellable);
@@ -1537,7 +1489,7 @@ str_ref (const gchar *str)
     gpointer p;
     guint i;
 
-    g_mutex_lock (&str_mutex);
+    g_static_mutex_lock (&str_mutex);
     if (str_refs == NULL)
 	str_refs = g_hash_table_new (g_direct_hash, g_direct_equal);
     p = g_hash_table_lookup (str_refs, str);
@@ -1547,7 +1499,7 @@ str_ref (const gchar *str)
     p = GUINT_TO_POINTER (i);
 
     g_hash_table_insert (str_refs, (gpointer) str, p);
-    g_mutex_unlock (&str_mutex);
+    g_static_mutex_unlock (&str_mutex);
 
     return str;
 }
@@ -1558,7 +1510,7 @@ str_unref (const gchar *str)
     gpointer p;
     guint i;
 
-    g_mutex_lock (&str_mutex);
+    g_static_mutex_lock (&str_mutex);
     p = g_hash_table_lookup (str_refs, str);
 
     i = GPOINTER_TO_UINT (p);
@@ -1573,5 +1525,5 @@ str_unref (const gchar *str)
 	g_free ((gchar *) str);
     }
 
-    g_mutex_unlock (&str_mutex);
+    g_static_mutex_unlock (&str_mutex);
 }

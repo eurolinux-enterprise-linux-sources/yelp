@@ -13,14 +13,17 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance  <shaunm@gnome.org>
  */
 
 #include <gtk/gtk.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
+#include "yelp-location-entry.h"
 #include "yelp-view.h"
 #include "yelp-uri.h"
 #include "yelp-simple-document.h"
@@ -43,7 +46,7 @@ state_cb (YelpView   *view,
 {
     YelpViewState state;
     g_object_get (view, "state", &state, NULL);
-    printf ("STATE: %i\n", (int)state);
+    printf ("STATE: %i\n", state);
 }
 
 static void
@@ -61,6 +64,9 @@ int
 main (int argc, char **argv)
 {
     GtkWidget *window, *vbox, *entry, *scroll, *view;
+    YelpUri *uri;
+    YelpDocument *document;
+    GCancellable *cancellable;
 
     gtk_init (&argc, &argv);
 
@@ -70,7 +76,7 @@ main (int argc, char **argv)
     gtk_window_set_default_size (GTK_WINDOW (window), 520, 580);
     g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
 
-    vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 0);
+    vbox = gtk_vbox_new (FALSE, 0);
     gtk_container_add (GTK_CONTAINER (window), vbox);
 
     entry = gtk_entry_new ();
@@ -88,21 +94,19 @@ main (int argc, char **argv)
     g_signal_connect (view, "notify::title",
 		      G_CALLBACK (title_cb), window);
     gtk_container_add (GTK_CONTAINER (scroll), view);
+			   
 
-
-    g_signal_connect (entry, "activate", G_CALLBACK (activate_cb), view);
+    g_signal_connect (entry, "activate", activate_cb, view);
 
     if (argc >= 2) {
 	/* I put in the double-load to test some race condition bugs.
 	 * I decided to leave it in.
 	 */
-	yelp_view_load (YELP_VIEW (view), argv[1]);
-	yelp_view_load (YELP_VIEW (view), argv[1]);
+	yelp_view_load (view, argv[1]);
+	yelp_view_load (view, argv[1]);
     }
 
     gtk_widget_show_all (GTK_WIDGET (window));
 
     gtk_main ();
-
-    return 0;
 }

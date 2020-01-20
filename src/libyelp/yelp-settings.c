@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -30,7 +32,7 @@
 #include "yelp-settings.h"
 
 struct _YelpSettingsPriv {
-    GMutex        mutex;
+    GMutex       *mutex;
 
     gchar         colors[YELP_SETTINGS_NUM_COLORS][8];
     gchar        *setfonts[YELP_SETTINGS_NUM_FONTS];
@@ -71,12 +73,15 @@ enum {
   PROP_EDITOR_MODE
 };
 
-static const gchar *icon_names[YELP_SETTINGS_NUM_ICONS];
+gchar *icon_names[YELP_SETTINGS_NUM_ICONS];
 
-G_DEFINE_TYPE (YelpSettings, yelp_settings, G_TYPE_OBJECT)
+G_DEFINE_TYPE (YelpSettings, yelp_settings, G_TYPE_OBJECT);
 #define GET_PRIV(object) (G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_SETTINGS, YelpSettingsPriv))
 
+static void           yelp_settings_class_init   (YelpSettingsClass    *klass);
+static void           yelp_settings_init         (YelpSettings         *settings);
 static void           yelp_settings_constructed  (GObject              *object);
+static void           yelp_settings_dispose      (GObject              *object);
 static void           yelp_settings_finalize     (GObject              *object);
 static void           yelp_settings_get_property (GObject              *object,
 						  guint                 prop_id,
@@ -98,7 +103,9 @@ static void           gtk_font_changed           (GtkSettings          *gtk_sett
 static void           icon_theme_changed         (GtkIconTheme         *theme,
 						  YelpSettings         *settings);
 
-static void           rgb_to_hsv                 (GdkRGBA  color,
+static void           rgb_to_hsv                 (gdouble  r,
+						  gdouble  g,
+						  gdouble  b,
 						  gdouble *h,
 						  gdouble *s,
 						  gdouble *v);
@@ -116,6 +123,7 @@ yelp_settings_class_init (YelpSettingsClass *klass)
     gint i;
 
     object_class->constructed  = yelp_settings_constructed;
+    object_class->dispose  = yelp_settings_dispose;
     object_class->finalize = yelp_settings_finalize;
     object_class->get_property = yelp_settings_get_property;
     object_class->set_property = yelp_settings_set_property;
@@ -145,8 +153,8 @@ yelp_settings_class_init (YelpSettingsClass *klass)
     g_object_class_install_property (object_class,
                                      PROP_GTK_SETTINGS,
                                      g_param_spec_object ("gtk-settings",
-							  "GtkSettings",
-							  "A GtkSettings object to get settings from",
+							  _("GtkSettings"),
+							  _("A GtkSettings object to get settings from"),
 							  GTK_TYPE_SETTINGS,
 							  G_PARAM_READWRITE | G_PARAM_STATIC_NAME |
 							  G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB));
@@ -154,8 +162,8 @@ yelp_settings_class_init (YelpSettingsClass *klass)
     g_object_class_install_property (object_class,
                                      PROP_GTK_ICON_THEME,
                                      g_param_spec_object ("gtk-icon-theme",
-							  "GtkIconTheme",
-							  "A GtkIconTheme object to get icons from",
+							  _("GtkIconTheme"),
+							  _("A GtkIconTheme object to get icons from"),
 							  GTK_TYPE_ICON_THEME,
 							  G_PARAM_READWRITE | G_PARAM_STATIC_NAME |
 							  G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB));
@@ -163,8 +171,8 @@ yelp_settings_class_init (YelpSettingsClass *klass)
     g_object_class_install_property (object_class,
                                      PROP_FONT_ADJUSTMENT,
                                      g_param_spec_int ("font-adjustment",
-                                                       "Font Adjustment",
-                                                       "A size adjustment to add to font sizes",
+                                                       _("Font Adjustment"),
+                                                       _("A size adjustment to add to font sizes"),
                                                        -3, 10, 0,
                                                        G_PARAM_READWRITE | G_PARAM_STATIC_NAME |
                                                        G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB));
@@ -172,8 +180,8 @@ yelp_settings_class_init (YelpSettingsClass *klass)
     g_object_class_install_property (object_class,
                                      PROP_SHOW_TEXT_CURSOR,
                                      g_param_spec_boolean ("show-text-cursor",
-                                                           "Show Text Cursor",
-                                                           "Show the text cursor or caret for accessible navigation",
+                                                           _("Show Text Cursor"),
+                                                           _("Show the text cursor or caret for accessible navigation"),
                                                            FALSE,
                                                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME |
                                                            G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB));
@@ -181,8 +189,8 @@ yelp_settings_class_init (YelpSettingsClass *klass)
     g_object_class_install_property (object_class,
                                      PROP_EDITOR_MODE,
                                      g_param_spec_boolean ("editor-mode",
-                                                           "Editor Mode",
-                                                           "Enable features useful to editors",
+                                                           _("Editor Mode"),
+                                                           _("Enable features useful to editors"),
                                                            FALSE,
                                                            G_PARAM_READWRITE | G_PARAM_STATIC_NAME |
                                                            G_PARAM_STATIC_NICK | G_PARAM_STATIC_BLURB));
@@ -220,7 +228,7 @@ yelp_settings_init (YelpSettings *settings)
     gint i;
 
     settings->priv = GET_PRIV (settings);
-    g_mutex_init (&settings->priv->mutex);
+    settings->priv->mutex = g_mutex_new ();
     settings->priv->icon_size = 24;
 
     for (i = 0; i < YELP_SETTINGS_NUM_ICONS; i++)
@@ -238,218 +246,98 @@ static void
 yelp_settings_constructed (GObject *object)
 {
     YelpSettings *settings = YELP_SETTINGS (object);
-    gboolean skip_dbus_checks = FALSE;
-    gchar *os_release = NULL;
-    const gchar *desktop;
+    GDBusConnection *connection;
+    GVariant *ret, *names;
+    GVariant *ret2;
+    GVariantIter iter;
+    gchar *name;
+    gboolean env_shell, env_classic, env_panel, env_unity, env_xfce;
+    GError *error = NULL;
+
+    connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
+    if (connection == NULL) {
+        g_warning ("Unable to connect to dbus: %s", error->message);
+        g_error_free (error);
+        return;
+    }
+
+    ret = g_dbus_connection_call_sync (connection,
+                                       "org.freedesktop.DBus",
+                                       "/org/freedesktop/DBus",
+                                       "org.freedesktop.DBus",
+                                       "ListNames",
+                                       NULL,
+                                       G_VARIANT_TYPE ("(as)"),
+                                       G_DBUS_CALL_FLAGS_NONE,
+                                       -1, NULL, &error);
+    if (ret == NULL) {
+        g_warning ("Unable to query dbus: %s", error->message);
+        g_error_free (error);
+        return;
+    }
+    env_shell = env_classic = env_panel = env_unity = env_xfce = FALSE;
+    names = g_variant_get_child_value (ret, 0);
+    g_variant_iter_init (&iter, names);
+    while (g_variant_iter_loop (&iter, "&s", &name)) {
+        if (g_str_equal (name, "org.gnome.Panel"))
+            env_panel = TRUE;
+        else if (g_str_equal (name, "org.gnome.Shell"))
+            env_shell = TRUE;
+        else if (g_str_equal (name, "com.canonical.Unity"))
+            env_unity = TRUE;
+        else if (g_str_equal (name, "org.xfce.Panel"))
+            env_xfce = TRUE;
+    }
+    g_variant_unref (names);
+    g_variant_unref (ret);
+    if (env_shell) {
+        ret = g_dbus_connection_call_sync (connection,
+                                               "org.gnome.Shell",
+                                               "/org/gnome/Shell",
+                                               "org.freedesktop.DBus.Properties",
+                                               "Get",
+                                               g_variant_new ("(ss)",
+                                                              "org.gnome.Shell",
+                                                              "Mode"),
+                                               G_VARIANT_TYPE ("(v)"),
+                                               G_DBUS_CALL_FLAGS_NONE,
+                                               -1, NULL, &error);
+        if (ret == NULL) {
+            g_warning ("Failed to get GNOME shell mode: %s", error->message);
+            g_error_free (error);
+        } else {
+            GVariant *v;
+            g_variant_get (ret, "(v)", &v);
+            if (g_variant_is_of_type (v, G_VARIANT_TYPE_STRING) &&
+                g_str_equal (g_variant_get_string (v, NULL), "classic")) {
+                env_classic = TRUE;
+            }
+            g_variant_unref (v);
+            g_variant_unref (ret);
+        }
+    }
+
+    if (env_classic)
+        yelp_settings_set_if_token (settings, "platform:gnome-classic");
+
+    if (env_shell)
+        yelp_settings_set_if_token (settings, "platform:gnome-shell");
+    else if (env_xfce)
+        yelp_settings_set_if_token (settings, "platform:xfce");
+    else if (env_unity)
+        yelp_settings_set_if_token (settings, "platform:unity");
+    else if (env_panel)
+        yelp_settings_set_if_token (settings, "platform:gnome-panel");
 
     yelp_settings_set_if_token (settings, "action:install");
+}
 
-    g_file_get_contents ("/etc/os-release", &os_release, NULL, NULL);
-    if (os_release == NULL)
-        g_file_get_contents ("/usr/lib/os-release", &os_release, NULL, NULL);
+static void
+yelp_settings_dispose (GObject *object)
+{
+    YelpSettings *settings = YELP_SETTINGS (object);
 
-    if (os_release != NULL) {
-        gint i;
-        gchar **lines = g_strsplit(os_release, "\n", -1);
-        gchar *osid = NULL, *osversion = NULL, *end;
-        g_free (os_release);
-
-        for (i = 0; lines[i] != NULL; i++) {
-            if (g_str_has_prefix (lines[i], "ID=")) {
-                if (lines[i][3] == '"') {
-                    end = strchr (lines[i] + 4, '"');
-                    if (end != NULL)
-                        osid = g_strndup (lines[i] + 4, end - lines[i] - 4);
-                }
-                else if (lines[i][3] == '\'') {
-                    end = strchr (lines[i] + 4, '\'');
-                    if (end != NULL)
-                        osid = g_strndup (lines[i] + 4, end - lines[i] - 4);
-                }
-                else {
-                    osid = g_strdup (lines[i] + 3);
-                }
-            }
-            else if (g_str_has_prefix (lines[i], "VERSION_ID=")) {
-                if (lines[i][11] == '"') {
-                    end = strchr (lines[i] + 12, '"');
-                    if (end != NULL)
-                        osversion = g_strndup (lines[i] + 12, end - lines[i] - 12);
-                }
-                else if (lines[i][11] == '\'') {
-                    end = strchr (lines[i] + 12, '\'');
-                    if (end != NULL)
-                        osversion = g_strndup (lines[i] + 12, end - lines[i] - 12);
-                }
-                else {
-                    osversion = g_strdup (lines[i] + 11);
-                }
-            }
-        }
-
-        if (osid) {
-            gchar *token = g_strconcat("platform:", osid, NULL);
-            yelp_settings_set_if_token (settings, token);
-            g_free (token);
-            if (osversion) {
-                token = g_strconcat("platform:", osid, "-", osversion, NULL);
-                yelp_settings_set_if_token (settings, token);
-                g_free (token);
-                g_free (osversion);
-            }
-            g_free (osid);
-        }
-
-        g_strfreev(lines);
-    }
-
-    desktop = g_getenv ("XDG_CURRENT_DESKTOP");
-    if (desktop != NULL) {
-        gchar **desktops = g_strsplit (desktop, ":", -1);
-        gint i;
-        gboolean xdg_gnome = FALSE, xdg_gnome_classic = FALSE;
-        for (i = 0; desktops[i]; i++) {
-            if (!g_ascii_strcasecmp (desktops[i], "gnome")) {
-                xdg_gnome = TRUE;
-            }
-            else if (!g_ascii_strcasecmp (desktops[i], "gnome-classic")) {
-                xdg_gnome_classic = TRUE;
-            }
-            else if (!g_ascii_strcasecmp (desktops[i], "kde")) {
-                yelp_settings_set_if_token (settings, "platform:kde");
-                skip_dbus_checks = TRUE;
-                break;
-            }
-            else if (!g_ascii_strcasecmp (desktops[i], "mate")) {
-                yelp_settings_set_if_token (settings, "platform:mate");
-                yelp_settings_set_if_token (settings, "platform:gnome-panel");
-                skip_dbus_checks = TRUE;
-                break;
-            }
-            else if (!g_ascii_strcasecmp (desktops[i], "pantheon")) {
-                yelp_settings_set_if_token (settings, "platform:pantheon");
-                yelp_settings_set_if_token (settings, "platform:gnome-shell");
-                skip_dbus_checks = TRUE;
-                break;
-            }
-            else if (!g_ascii_strcasecmp (desktops[i], "unity")) {
-                yelp_settings_set_if_token (settings, "platform:unity");
-                skip_dbus_checks = TRUE;
-                break;
-            }
-            else if (!g_ascii_strcasecmp (desktops[i], "x-cinnamon")) {
-                yelp_settings_set_if_token (settings, "platform:cinnamon");
-                yelp_settings_set_if_token (settings, "platform:gnome-shell");
-                skip_dbus_checks = TRUE;
-                break;
-            }
-            else if (!g_ascii_strcasecmp (desktops[i], "xfce")) {
-                yelp_settings_set_if_token (settings, "platform:xfce");
-                skip_dbus_checks = TRUE;
-                break;
-            }
-        }
-        if (xdg_gnome) {
-            yelp_settings_set_if_token (settings, "platform:gnome-shell");
-            if (!xdg_gnome_classic)
-                yelp_settings_set_if_token (settings, "platform:gnome-3");
-            skip_dbus_checks = TRUE;
-        }
-        if (xdg_gnome_classic) {
-            yelp_settings_set_if_token (settings, "platform:gnome-classic");
-            yelp_settings_set_if_token (settings, "platform:gnome-shell");
-            skip_dbus_checks = TRUE;
-        }
-        g_strfreev (desktops);
-    }
-
-    if (!skip_dbus_checks) {
-        GDBusConnection *connection;
-        GVariant *ret, *names;
-        GVariantIter iter;
-        gchar *name;
-        gboolean env_shell, env_classic, env_panel, env_unity, env_xfce;
-        GError *error = NULL;
-
-        connection = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
-        if (connection == NULL) {
-            g_warning ("Unable to connect to dbus: %s", error->message);
-            g_error_free (error);
-            return;
-        }
-
-        ret = g_dbus_connection_call_sync (connection,
-                                           "org.freedesktop.DBus",
-                                           "/org/freedesktop/DBus",
-                                           "org.freedesktop.DBus",
-                                           "ListNames",
-                                           NULL,
-                                           G_VARIANT_TYPE ("(as)"),
-                                           G_DBUS_CALL_FLAGS_NONE,
-                                           -1, NULL, &error);
-        if (ret == NULL) {
-            g_warning ("Unable to query dbus: %s", error->message);
-            g_error_free (error);
-            return;
-        }
-        env_shell = env_classic = env_panel = env_unity = env_xfce = FALSE;
-        names = g_variant_get_child_value (ret, 0);
-        g_variant_iter_init (&iter, names);
-        while (g_variant_iter_loop (&iter, "&s", &name)) {
-            if (g_str_equal (name, "org.gnome.Panel"))
-                env_panel = TRUE;
-            else if (g_str_equal (name, "org.gnome.Shell"))
-                env_shell = TRUE;
-            else if (g_str_equal (name, "com.canonical.Unity"))
-                env_unity = TRUE;
-            else if (g_str_equal (name, "org.xfce.Panel"))
-                env_xfce = TRUE;
-        }
-        g_variant_unref (names);
-        g_variant_unref (ret);
-        if (env_shell) {
-            ret = g_dbus_connection_call_sync (connection,
-                                                   "org.gnome.Shell",
-                                                   "/org/gnome/Shell",
-                                                   "org.freedesktop.DBus.Properties",
-                                                   "Get",
-                                                   g_variant_new ("(ss)",
-                                                                  "org.gnome.Shell",
-                                                                  "Mode"),
-                                                   G_VARIANT_TYPE ("(v)"),
-                                                   G_DBUS_CALL_FLAGS_NONE,
-                                                   -1, NULL, &error);
-            if (ret == NULL) {
-                g_warning ("Failed to get GNOME shell mode: %s", error->message);
-                g_error_free (error);
-            } else {
-                GVariant *v;
-                g_variant_get (ret, "(v)", &v);
-                if (g_variant_is_of_type (v, G_VARIANT_TYPE_STRING) &&
-                    g_str_equal (g_variant_get_string (v, NULL), "classic")) {
-                    env_classic = TRUE;
-                }
-                g_variant_unref (v);
-                g_variant_unref (ret);
-            }
-        }
-
-        if (env_classic)
-            yelp_settings_set_if_token (settings, "platform:gnome-classic");
-
-        /* order is important:
-           gnome-shell also provides org.gnome.Panel
-           unity also provides org.gnome.Shell
-         */
-        if (env_unity)
-            yelp_settings_set_if_token (settings, "platform:unity");
-        else if (env_shell)
-            yelp_settings_set_if_token (settings, "platform:gnome-shell");
-        else if (env_xfce)
-            yelp_settings_set_if_token (settings, "platform:xfce");
-        else if (env_panel)
-            yelp_settings_set_if_token (settings, "platform:gnome-panel");
-    }
+    G_OBJECT_CLASS (yelp_settings_parent_class)->dispose (object);
 }
 
 static void
@@ -457,7 +345,7 @@ yelp_settings_finalize (GObject *object)
 {
     YelpSettings *settings = YELP_SETTINGS (object);
 
-    g_mutex_clear (&settings->priv->mutex);
+    g_mutex_free (settings->priv->mutex);
 
     g_hash_table_destroy (settings->priv->tokens);
 
@@ -596,15 +484,15 @@ yelp_settings_set_property (GObject      *object,
 YelpSettings *
 yelp_settings_get_default (void)
 {
-    static GMutex mutex;
+    static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
     static YelpSettings *settings = NULL;
-    g_mutex_lock (&mutex);
+    g_static_mutex_lock (&mutex);
     if (settings == NULL)
 	settings = g_object_new (YELP_TYPE_SETTINGS,
 				 "gtk-settings", gtk_settings_get_default (),
 				 "gtk-icon-theme", gtk_icon_theme_get_default (),
 				 NULL);
-    g_mutex_unlock (&mutex);
+    g_static_mutex_unlock (&mutex);
     return settings;
 }
 
@@ -617,9 +505,9 @@ yelp_settings_get_color (YelpSettings       *settings,
     gchar *colorstr;
     g_return_val_if_fail (color < YELP_SETTINGS_NUM_COLORS, NULL);
 
-    g_mutex_lock (&settings->priv->mutex);
+    g_mutex_lock (settings->priv->mutex);
     colorstr = g_strdup (settings->priv->colors[color]);
-    g_mutex_unlock (&settings->priv->mutex);
+    g_mutex_unlock (settings->priv->mutex);
 
     return colorstr;
 }
@@ -642,7 +530,7 @@ yelp_settings_set_colors (YelpSettings      *settings,
     YelpSettingsColor color;
     va_list args;
 
-    g_mutex_lock (&settings->priv->mutex);
+    g_mutex_lock (settings->priv->mutex);
     va_start (args, first_color);
 
     color = first_color;
@@ -659,7 +547,7 @@ yelp_settings_set_colors (YelpSettings      *settings,
     }
 
     va_end (args);
-    g_mutex_unlock (&settings->priv->mutex);
+    g_mutex_unlock (settings->priv->mutex);
 
     g_signal_emit (settings, settings_signals[COLORS_CHANGED], 0);
 }
@@ -696,12 +584,12 @@ yelp_settings_get_font (YelpSettings     *settings,
     gchar *ret;
     g_return_val_if_fail (font < YELP_SETTINGS_NUM_FONTS, NULL);
 
-    g_mutex_lock (&settings->priv->mutex);
+    g_mutex_lock (settings->priv->mutex);
     if (settings->priv->setfonts[font])
 	ret = g_strdup (settings->priv->setfonts[font]);
     else
 	ret = g_strdup (settings->priv->fonts[font]);
-    g_mutex_unlock (&settings->priv->mutex);
+    g_mutex_unlock (settings->priv->mutex);
 
     return ret;
 }
@@ -714,7 +602,7 @@ yelp_settings_get_font_family (YelpSettings     *settings,
     gchar *desc, *ret, *c; /* do not free */
     g_return_val_if_fail (font < YELP_SETTINGS_NUM_FONTS, NULL);
 
-    g_mutex_lock (&settings->priv->mutex);
+    g_mutex_lock (settings->priv->mutex);
 
     if (settings->priv->setfonts[font])
 	desc = g_strdup (settings->priv->setfonts[font]);
@@ -736,7 +624,7 @@ yelp_settings_get_font_family (YelpSettings     *settings,
     ret = g_strndup (desc, c - desc);
 
  done:
-    g_mutex_unlock (&settings->priv->mutex);
+    g_mutex_unlock (settings->priv->mutex);
     return ret;
 }
 
@@ -748,7 +636,7 @@ yelp_settings_get_font_size (YelpSettings     *settings,
     gint ret;
     g_return_val_if_fail (font < YELP_SETTINGS_NUM_FONTS, 0);
 
-    g_mutex_lock (&settings->priv->mutex);
+    g_mutex_lock (settings->priv->mutex);
 
     if (settings->priv->setfonts[font])
 	desc = g_strdup (settings->priv->setfonts[font]);
@@ -770,7 +658,7 @@ yelp_settings_get_font_size (YelpSettings     *settings,
     ret = g_ascii_strtod (c, NULL);
 
  done:
-    g_mutex_unlock (&settings->priv->mutex);
+    g_mutex_unlock (settings->priv->mutex);
     ret += settings->priv->font_adjustment;
     ret = (ret < 5) ? 5 : ret;
     return ret;
@@ -784,7 +672,7 @@ yelp_settings_set_fonts (YelpSettings     *settings,
     YelpSettingsFont font;
     va_list args;
 
-    g_mutex_lock (&settings->priv->mutex);
+    g_mutex_lock (settings->priv->mutex);
     va_start (args, first_font);
 
     font = first_font;
@@ -797,7 +685,7 @@ yelp_settings_set_fonts (YelpSettings     *settings,
     }
 
     va_end (args);
-    g_mutex_unlock (&settings->priv->mutex);
+    g_mutex_unlock (settings->priv->mutex);
 
     g_signal_emit (settings, settings_signals[FONTS_CHANGED], 0);
 }
@@ -839,9 +727,9 @@ yelp_settings_get_icon (YelpSettings     *settings,
     gchar *ret;
     g_return_val_if_fail (icon < YELP_SETTINGS_NUM_ICONS, NULL);
 
-    g_mutex_lock (&settings->priv->mutex);
+    g_mutex_lock (settings->priv->mutex);
     ret = g_strdup (settings->priv->icons[icon]);
-    g_mutex_unlock (&settings->priv->mutex);
+    g_mutex_unlock (settings->priv->mutex);
 
     return ret;
 }
@@ -854,7 +742,7 @@ yelp_settings_set_icons (YelpSettings     *settings,
     YelpSettingsIcon icon;
     va_list args;
 
-    g_mutex_lock (&settings->priv->mutex);
+    g_mutex_lock (settings->priv->mutex);
     va_start (args, first_icon);
 
     icon = first_icon;
@@ -867,7 +755,7 @@ yelp_settings_set_icons (YelpSettings     *settings,
     }
 
     va_end (args);
-    g_mutex_unlock (&settings->priv->mutex);
+    g_mutex_unlock (settings->priv->mutex);
 
     g_signal_emit (settings, settings_signals[ICONS_CHANGED], 0);
 }
@@ -935,11 +823,11 @@ yelp_settings_get_all_params (YelpSettings *settings,
 {
     gchar **params;
     gint i, ix;
-    GString *malstr, *dbstr;
+    GString *envstr;
     GList *envs, *envi;
 
     params = g_new0 (gchar *,
-                     (2*YELP_SETTINGS_NUM_COLORS) + (2*YELP_SETTINGS_NUM_ICONS) + extra + 9);
+                     (2*YELP_SETTINGS_NUM_COLORS) + (2*YELP_SETTINGS_NUM_ICONS) + extra + 7);
 
     for (i = 0; i < YELP_SETTINGS_NUM_COLORS; i++) {
         gchar *val;
@@ -966,24 +854,16 @@ yelp_settings_get_all_params (YelpSettings *settings,
     else
         params[ix++] = g_strdup ("false()");
 
-    malstr = g_string_new ("'");
-    dbstr = g_string_new ("'");
+    envstr = g_string_new ("'");
     envs = g_hash_table_get_keys (settings->priv->tokens);
     for (envi = envs; envi != NULL; envi = envi->next) {
-        g_string_append_c (malstr, ' ');
-        g_string_append (malstr, (gchar *) envi->data);
-        if (g_str_has_prefix ((gchar *) envi->data, "platform:")) {
-            g_string_append_c (dbstr, ';');
-            g_string_append (dbstr, (gchar *) (envi->data) + 9);
-        }
+        g_string_append_c (envstr, ' ');
+        g_string_append (envstr, (gchar *) envi->data);
     }
-    g_string_append_c (malstr, '\'');
-    g_string_append_c (dbstr, '\'');
+    g_string_append_c (envstr, '\'');
     g_list_free (envs);
     params[ix++] = g_strdup ("mal.if.custom");
-    params[ix++] = g_string_free (malstr, FALSE);
-    params[ix++] = g_strdup ("db.profile.os");
-    params[ix++] = g_string_free (dbstr, FALSE);
+    params[ix++] = g_string_free (envstr, FALSE);
 
     params[ix] = NULL;
 
@@ -999,104 +879,129 @@ gtk_theme_changed (GtkSettings  *gtk_settings,
 		   GParamSpec   *pspec,
 		   YelpSettings *settings)
 {
-    GtkStyleContext *context, *linkcontext;
-    GtkWidget *tmpwin, *tmpbox, *tmpview, *tmplink;
-    GdkRGBA base, text, link;
+    GtkWidget *widget;
+    GtkStyle  *style;
+    GdkColor  *color;
+    GdkColor   blue = { 0, 0x1E1E, 0x3E3E, 0xE7E7 };
     gdouble    base_h, base_s, base_v;
     gdouble    text_h, text_s, text_v;
+    gint i;
 
-    g_mutex_lock (&settings->priv->mutex);
+    g_mutex_lock (settings->priv->mutex);
 
-    tmpwin = gtk_offscreen_window_new ();
-    tmpbox = gtk_grid_new ();
-    tmpview = gtk_text_view_new ();
-    tmplink = gtk_link_button_new ("http://projectmallard.org/");
-    gtk_container_add (GTK_CONTAINER (tmpwin), tmpbox);
-    gtk_container_add (GTK_CONTAINER (tmpbox), tmpview);
-    gtk_container_add (GTK_CONTAINER (tmpbox), tmplink);
-    gtk_widget_show_all (tmpwin);
+    style = gtk_rc_get_style_by_paths (gtk_settings,
+                                       "GtkTextView", "GtkTextView",
+                                       GTK_TYPE_TEXT_VIEW);
+    if (style)
+        g_object_ref (G_OBJECT (style));
+    else
+        style = gtk_style_new ();
 
-    context = gtk_widget_get_style_context (tmpview);
-    gtk_style_context_save (context);
 
-    gtk_style_context_set_state (context, GTK_STATE_FLAG_NORMAL);
-    gtk_style_context_add_class (context, GTK_STYLE_CLASS_VIEW);
-    gtk_style_context_get_color (context, GTK_STATE_FLAG_NORMAL, &text);
-    gtk_style_context_get_background_color (context, GTK_STATE_FLAG_NORMAL, &base);
-
-    gtk_style_context_restore (context);
-
-    rgb_to_hsv (text, &text_h, &text_s, &text_v);
-    rgb_to_hsv (base, &base_h, &base_s, &base_v);
+    rgb_to_hsv (style->text[GTK_STATE_NORMAL].red / 65535.0,
+                style->text[GTK_STATE_NORMAL].green / 65535.0,
+                style->text[GTK_STATE_NORMAL].blue / 65535.0,
+                &text_h, &text_s, &text_v);
+    rgb_to_hsv (style->base[GTK_STATE_NORMAL].red / 65535.0,
+                style->base[GTK_STATE_NORMAL].green / 65535.0,
+                style->base[GTK_STATE_NORMAL].blue / 65535.0,
+                &base_h, &base_s, &base_v);
 
     /* YELP_SETTINGS_COLOR_BASE */
-    g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_BASE], 8, "#%02X%02X%02X",
-                (guint) (base.red * 255), (guint) (base.green * 255), (guint) (base.blue * 255));
+    g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_BASE], 8,
+                "#%02X%02X%02X",
+                style->base[GTK_STATE_NORMAL].red >> 8,
+                style->base[GTK_STATE_NORMAL].green >> 8,
+                style->base[GTK_STATE_NORMAL].blue >> 8);
 
     /* YELP_SETTINGS_COLOR_TEXT */
-    g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_TEXT], 8, "#%02X%02X%02X",
-                (guint) (text.red * 255), (guint) (text.green * 255), (guint) (text.blue * 255));
-
-    linkcontext = gtk_widget_get_style_context (tmplink);
-    gtk_style_context_save (linkcontext);
+    g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_TEXT], 8,
+                "#%02X%02X%02X",
+                style->text[GTK_STATE_NORMAL].red >> 8,
+                style->text[GTK_STATE_NORMAL].green >> 8,
+                style->text[GTK_STATE_NORMAL].blue >> 8);
 
     /* YELP_SETTINGS_COLOR_LINK */
-    gtk_style_context_set_state (linkcontext, GTK_STATE_FLAG_LINK);
-    gtk_style_context_get_color (linkcontext, GTK_STATE_FLAG_LINK, &link);
-    g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_LINK], 8, "#%02X%02X%02X",
-                (guint) (link.red * 255), (guint) (link.green * 255), (guint) (link.blue * 255));
+    widget = gtk_link_button_new ("http://www.gnome.org");
+    gtk_widget_style_get (widget, "link-color", &color, NULL);
+    if (!color)
+        color = &blue;
+    g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_LINK], 8,
+                "#%02X%02X%02X",
+                color->red >> 8,
+                color->green >> 8,
+                color->blue >> 8);
+    if (color != &blue)
+        gdk_color_free (color);
 
     /* YELP_SETTINGS_COLOR_LINK_VISITED */
-    gtk_style_context_set_state (linkcontext, GTK_STATE_FLAG_VISITED);
-    gtk_style_context_get_color (linkcontext, GTK_STATE_FLAG_VISITED, &link);
-    g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_LINK_VISITED], 8, "#%02X%02X%02X",
-                (guint) (link.red * 255), (guint) (link.green * 255), (guint) (link.blue * 255));
+    color = NULL;
+    gtk_widget_style_get (widget, "visited-link-color", &color, NULL);
+    if (color) {
+        g_snprintf (settings->priv->colors[YELP_SETTINGS_COLOR_LINK_VISITED], 8,
+                    "#%02X%02X%02X",
+                    color->red >> 8,
+                    color->green >> 8,
+                    color->blue >> 8);
+        gdk_color_free (color);
+    }
 
-
-    gtk_style_context_restore (linkcontext);
+    g_object_ref_sink (widget);
+    g_object_unref (widget);
 
     /* YELP_SETTINGS_COLOR_TEXT_LIGHT */
-    hsv_to_hex (text_h, text_s, text_v - ((text_v - base_v) * 0.25),
+    hsv_to_hex (text_h, 
+                text_s,
+                text_v - ((text_v - base_v) * 0.25),
                 settings->priv->colors[YELP_SETTINGS_COLOR_TEXT_LIGHT]);
 
     /* YELP_SETTINGS_COLOR_GRAY */
-    hsv_to_hex (base_h, base_s,
+    hsv_to_hex (base_h, 
+                base_s,
                 base_v - ((base_v - text_v) * 0.05),
                 settings->priv->colors[YELP_SETTINGS_COLOR_GRAY_BASE]);
-    hsv_to_hex (base_h, base_s,
+    hsv_to_hex (base_h, 
+                base_s,
                 base_v - ((base_v - text_v) * 0.1),
                 settings->priv->colors[YELP_SETTINGS_COLOR_DARK_BASE]);
-    hsv_to_hex (base_h, base_s,
+    hsv_to_hex (base_h, 
+                base_s,
                 base_v - ((base_v - text_v) * 0.26),
                 settings->priv->colors[YELP_SETTINGS_COLOR_GRAY_BORDER]);
 
     /* YELP_SETTINGS_COLOR_BLUE */
-    hsv_to_hex (211, 0.1,
+    hsv_to_hex (211,
+                0.1,
                 base_v - ((base_v - text_v) * 0.01),
                 settings->priv->colors[YELP_SETTINGS_COLOR_BLUE_BASE]);
-    hsv_to_hex (211, 0.45,
+    hsv_to_hex (211,
+                0.45,
                 base_v - ((base_v - text_v) * 0.19),
                 settings->priv->colors[YELP_SETTINGS_COLOR_BLUE_BORDER]);
 
     /* YELP_SETTINGS_COLOR_RED */
-    hsv_to_hex (0, 0.13,
+    hsv_to_hex (0,
+                0.13,
                 base_v - ((base_v - text_v) * 0.01),
                 settings->priv->colors[YELP_SETTINGS_COLOR_RED_BASE]);
-    hsv_to_hex (0, 0.83,
+    hsv_to_hex (0,
+                0.83,
                 base_v - ((base_v - text_v) * 0.06),
                 settings->priv->colors[YELP_SETTINGS_COLOR_RED_BORDER]);
 
     /* YELP_SETTINGS_COLOR_YELLOW */
-    hsv_to_hex (60, 0.25,
+    hsv_to_hex (60,
+                0.25,
                 base_v - ((base_v - text_v) * 0.01),
                 settings->priv->colors[YELP_SETTINGS_COLOR_YELLOW_BASE]);
-    hsv_to_hex (60, 1.0,
+    hsv_to_hex (60,
+                1.0,
                 base_v - ((base_v - text_v) * 0.07),
                 settings->priv->colors[YELP_SETTINGS_COLOR_YELLOW_BORDER]);
 
-    gtk_widget_destroy (tmpwin);
+    g_object_unref (G_OBJECT (style));
 
-    g_mutex_unlock (&settings->priv->mutex);
+    g_mutex_unlock (settings->priv->mutex);
 
     g_signal_emit (settings, settings_signals[COLORS_CHANGED], 0);
 }
@@ -1138,7 +1043,7 @@ icon_theme_changed (GtkIconTheme *theme,
     GtkIconInfo *info;
     gint i;
 
-    g_mutex_lock (&settings->priv->mutex);
+    g_mutex_lock (settings->priv->mutex);
 
     for (i = 0; i < YELP_SETTINGS_NUM_ICONS; i++) {
 	if (settings->priv->icons[i] != NULL)
@@ -1150,14 +1055,14 @@ icon_theme_changed (GtkIconTheme *theme,
 	if (info != NULL) {
 	    settings->priv->icons[i] = g_filename_to_uri (gtk_icon_info_get_filename (info),
                                                           NULL, NULL);
-	    g_object_unref (info);
+	    gtk_icon_info_free (info);
 	}
 	else {
 	    settings->priv->icons[i] = NULL;
 	}
     }
 
-    g_mutex_unlock (&settings->priv->mutex);
+    g_mutex_unlock (settings->priv->mutex);
 
     g_signal_emit (settings, settings_signals[ICONS_CHANGED], 0);
 }
@@ -1200,14 +1105,14 @@ yelp_settings_cmp_icons (const gchar *icon1,
 /******************************************************************************/
 
 static void
-rgb_to_hsv (GdkRGBA color, gdouble *h, gdouble *s, gdouble *v)
+rgb_to_hsv (gdouble r, gdouble g, gdouble b, gdouble *h, gdouble *s, gdouble *v)
 {
     gdouble min, max, delta;
 
-    max = (color.red > color.green) ? color.red : color.green;
-    max = (max > color.blue) ? max : color.blue;
-    min = (color.red < color.green) ? color.red : color.green;
-    min = (min < color.blue) ? min : color.blue;
+    max = (r > g) ? r : g;
+    max = (max > b) ? max : b;
+    min = (r < g) ? r : g;
+    min = (min < b) ? min : b;
 
     delta = max - min;
 
@@ -1218,12 +1123,12 @@ rgb_to_hsv (GdkRGBA color, gdouble *h, gdouble *s, gdouble *v)
     if (max != min) {
 	*s = delta / *v;
 
-	if (color.red == max)
-	    *h = (color.green - color.blue) / delta;
-	else if (color.green == max)
-	    *h = 2 + (color.blue - color.red) / delta;
-	else if (color.blue == max)
-	    *h = 4 + (color.red - color.green) / delta;
+	if (r == max)
+	    *h = (g - b) / delta;
+	else if (g == max)
+	    *h = 2 + (b - r) / delta;
+	else if (b == max)
+	    *h = 4 + (r - g) / delta;
 
 	*h *= 60;
 	if (*h < 0.0)
@@ -1235,10 +1140,12 @@ static void
 hsv_to_hex (gdouble h, gdouble s, gdouble v, gchar *str)
 {
     gint hue;
+    gdouble c;
     gdouble m1, m2, m3;
     gdouble r, g, b;
-    guint red, green, blue;
+    guint8 red, green, blue;
 
+    c = v * s;
     h /= 60;
     hue = (int) h;
     m1 = v * (1 - s);
@@ -1259,8 +1166,6 @@ hsv_to_hex (gdouble h, gdouble s, gdouble v, gchar *str)
         g = m1; r = m3; break;
     case 5:
         g = m1; b = m2; break;
-    default:
-        g_assert_not_reached (); break;
     }
 
     red = r * 255;

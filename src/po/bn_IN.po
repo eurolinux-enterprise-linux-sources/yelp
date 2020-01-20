@@ -7,25 +7,23 @@
 # Runa Bhattacharjee <runabh@gmail.com>, 2007.
 # Runa Bhattacharjee <runab@fedoraproject.org>, 2008.
 # Runa Bhattacharjee <runab@redhat.com>, 2008, 2009, 2010, 2012.
-# sray <sray@redhat.com>, 2013, 2014. #zanata.
 msgid ""
 msgstr ""
 "Project-Id-Version: bn_IN\n"
 "Report-Msgid-Bugs-To: http://bugzilla.gnome.org/enter_bug.cgi?"
 "product=yelp&keywords=I18N+L10N&component=General\n"
-"POT-Creation-Date: 2014-10-06 23:18+0000\n"
-"PO-Revision-Date: 2014-10-07 11:02+0000\n"
-"Last-Translator: \n"
-"Language-Team: Bengali (India) <kde-i18n-doc@kde.org>\n"
-"Language: bn_IN\n"
+"POT-Creation-Date: 2012-05-14 18:17+0000\n"
+"PO-Revision-Date: 2012-10-25 12:56+0530\n"
+"Last-Translator: Runa Bhattacharjee <runab@redhat.com>\n"
+"Language-Team: Bengali (India) <anubad@lists.ankur.org.in>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Lokalize 1.2\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "\n"
-"X-Generator: Lokalize 1.5\n"
+"Language: bn_IN\n"
 
-#. (itstool) path: msg/msgstr
 #. ID: install.tooltip
 #. This is a format message used to format tooltips on install: links. These
 #. links allow users to install packages by clicking a link in the help. The
@@ -35,47 +33,50 @@ msgstr ""
 #.
 #. <string/> - The package to install
 #.
-#: yelp.xml.in:36
+#: yelp.xml.in:29(msg/msgstr)
 msgid "Install <string/>"
 msgstr "<string/> ইনস্টল করুন"
 
-#: ../libyelp/yelp-bz2-decompressor.c:144
-#: ../libyelp/yelp-lzma-decompressor.c:153
+#: ../libyelp/yelp-bz2-decompressor.c:146
+#: ../libyelp/yelp-lzma-decompressor.c:155
 msgid "Invalid compressed data"
 msgstr "সংকুচিত তথ্য বৈধ নয়"
 
-#: ../libyelp/yelp-bz2-decompressor.c:150
-#: ../libyelp/yelp-lzma-decompressor.c:159
+#: ../libyelp/yelp-bz2-decompressor.c:152
+#: ../libyelp/yelp-lzma-decompressor.c:161
+#| msgid "Out of memory"
 msgid "Not enough memory"
 msgstr "পর্যাপ্ত মেমরি উপস্থিত নেই"
 
-#: ../libyelp/yelp-docbook-document.c:297 ../libyelp/yelp-info-document.c:237
-#: ../libyelp/yelp-mallard-document.c:305
-#: ../libyelp/yelp-mallard-document.c:456 ../libyelp/yelp-man-document.c:281
+#: ../libyelp/yelp-docbook-document.c:282 ../libyelp/yelp-info-document.c:238
+#: ../libyelp/yelp-mallard-document.c:306
+#: ../libyelp/yelp-mallard-document.c:458 ../libyelp/yelp-man-document.c:282
 #, c-format
+#| msgid "The page %s was not found in the document %s."
 msgid "The page ‘%s’ was not found in the document ‘%s’."
 msgstr "'%s' পৃষ্ঠাটি '%s' ডকুমেন্টের মধ্যে পাওয়া যায়নি।"
 
-#: ../libyelp/yelp-docbook-document.c:332 ../libyelp/yelp-info-document.c:371
-#: ../libyelp/yelp-man-document.c:416
+#: ../libyelp/yelp-docbook-document.c:317 ../libyelp/yelp-info-document.c:372
+#: ../libyelp/yelp-man-document.c:417
 #, c-format
+#| msgid "The file ‘%s’ does not exist."
 msgid "The file does not exist."
 msgstr "ফাইলটি অনুপস্থিত।"
 
-#: ../libyelp/yelp-docbook-document.c:342 ../libyelp/yelp-info-document.c:381
-#: ../libyelp/yelp-man-document.c:426
+#: ../libyelp/yelp-docbook-document.c:327 ../libyelp/yelp-info-document.c:382
+#: ../libyelp/yelp-man-document.c:427
 #, c-format
 msgid "The file ‘%s’ does not exist."
 msgstr "‘%s’ ফাইল অনুপস্থিত।"
 
-#: ../libyelp/yelp-docbook-document.c:357
+#: ../libyelp/yelp-docbook-document.c:342
 #, c-format
 msgid ""
 "The file ‘%s’ could not be parsed because it is not a well-formed XML "
 "document."
 msgstr "সঠিক XML ডকুমেন্ট রূপে গঠিত না হওয়ার ফলে ‘%s’ ফাইল পার্স করতে ব্যর্থ।"
 
-#: ../libyelp/yelp-docbook-document.c:370
+#: ../libyelp/yelp-docbook-document.c:355
 #, c-format
 msgid ""
 "The file ‘%s’ could not be parsed because one or more of its included files "
@@ -85,34 +86,37 @@ msgstr ""
 "গঠিত না "
 "হওয়ার ফলে এটি পার্স করতে ব্যর্থ।"
 
-#: ../libyelp/yelp-docbook-document.c:803
+#: ../libyelp/yelp-docbook-document.c:765
 msgid "Unknown"
 msgstr "অজানা"
 
-#: ../libyelp/yelp-docbook-document.c:864 ../libyelp/yelp-info-document.c:314
-#: ../libyelp/yelp-man-document.c:358
+#: ../libyelp/yelp-docbook-document.c:826 ../libyelp/yelp-info-document.c:315
+#: ../libyelp/yelp-man-document.c:359
 #, c-format
+#| msgid "The requested page was not found in the document %s."
 msgid "The requested page was not found in the document ‘%s’."
 msgstr "অনুরোধ করা পৃষ্ঠাটি '%s' ডকুমেন্টের মধ্যে পাওয়া যায়নি।"
 
-#: ../libyelp/yelp-document.c:266
+#: ../libyelp/yelp-document.c:268
 msgid "Indexed"
 msgstr "ইন্ডেক্স করা"
 
-#: ../libyelp/yelp-document.c:267
+#: ../libyelp/yelp-document.c:269
 msgid "Whether the document content has been indexed"
 msgstr "ডকুমেন্টের তথ্যগুলি ইনডেক্স করা হয়েছে কি না"
 
-#: ../libyelp/yelp-document.c:275
+#: ../libyelp/yelp-document.c:277
+#| msgid "Document Sections"
 msgid "Document URI"
 msgstr "ডকুমেন্টের URI"
 
-#: ../libyelp/yelp-document.c:276
+#: ../libyelp/yelp-document.c:278
 msgid "The URI which identifies the document"
 msgstr "ডকুমেন্ট সনাক্তকারী URI"
 
 #: ../libyelp/yelp-document.c:994
 #, c-format
+#| msgid "Search results for \"%s\""
 msgid "Search results for “%s”"
 msgstr "\"%s\" অনুসন্ধানের ফলাফল"
 
@@ -125,388 +129,486 @@ msgstr "“%s”-র মধ্যে কোনো মিলযুক্ত স�
 msgid "No matching help pages found."
 msgstr "কোনো মিলযুক্ত সহায়তার পৃষ্ঠা পাওয়া যায়নি।"
 
-#: ../libyelp/yelp-error.c:35
+#: ../libyelp/yelp-error.c:37
 #, c-format
 msgid "An unknown error occurred."
 msgstr "একটি অজানা ত্রুটি হয়েছে।"
 
-#: ../libyelp/yelp-help-list.c:546 ../libyelp/yelp-help-list.c:555
+#: ../libyelp/yelp-help-list.c:478 ../libyelp/yelp-help-list.c:487
 msgid "All Help Documents"
 msgstr "সহায়তার সকল নথিপত্র"
 
-#: ../libyelp/yelp-info-document.c:396
+#: ../libyelp/yelp-info-document.c:397
 #, c-format
 msgid ""
 "The file ‘%s’ could not be parsed because it is not a well-formed info page."
 msgstr "সঠিক info ডকুমেন্ট রূপে গঠিত না হওয়ার ফলে ‘%s’ ফাইল পার্স করতে ব্যর্থ।"
 
-#: ../libyelp/yelp-mallard-document.c:344
+#: ../libyelp/yelp-location-entry.c:336
+#| msgid "Viewer"
+msgid "View"
+msgstr "প্রদর্শন"
+
+#: ../libyelp/yelp-location-entry.c:337
+msgid "A YelpView instance to control"
+msgstr "নিয়ন্ত্রণযোগ্য একটি YelpView ইনস্ট্যান্স"
+
+#: ../libyelp/yelp-location-entry.c:352
+msgid "Bookmarks"
+msgstr "বুকমার্ক"
+
+#: ../libyelp/yelp-location-entry.c:353
+msgid "A YelpBookmarks implementation instance"
+msgstr "একটি YelpBookmarks বাস্তবায়নের ইনস্ট্যান্স"
+
+#: ../libyelp/yelp-location-entry.c:369
+msgid "Enable Search"
+msgstr "অনুসন্ধান সক্রিয় করুন"
+
+#: ../libyelp/yelp-location-entry.c:370
+msgid "Whether the location entry can be used as a search field"
+msgstr ""
+"অনুসন্ধানের ক্ষেত্র হিসাবে অবস্থান সুচক এনট্রিটি ব্যবহার করা যাবে কি না"
+
+# msgstr "সেকশন"
+#: ../libyelp/yelp-location-entry.c:440 ../src/yelp-window.c:270
+#| msgid "_Search:"
+msgid "Search..."
+msgstr "অনুসন্ধান..."
+
+#: ../libyelp/yelp-location-entry.c:783
+#| msgid "Repeat the search online at %s"
+msgid "Clear the search text"
+msgstr "অনুসন্ধান করা লেখা মুছে ফেলা হবে"
+
+#: ../libyelp/yelp-location-entry.c:831 ../libyelp/yelp-location-entry.c:1593
+#| msgid "Bookmarks"
+msgid "Bookmark this page"
+msgstr "বর্তমান পৃষ্ঠা বুকমার্ক করুন"
+
+#: ../libyelp/yelp-location-entry.c:839 ../libyelp/yelp-location-entry.c:1601
+#| msgid "Remove Bookmark"
+msgid "Remove bookmark"
+msgstr "বুকমার্ক মুছে ফেলুন"
+
+#: ../libyelp/yelp-location-entry.c:1154
+#, c-format
+#| msgid "Search results for \"%s\""
+msgid "Search for “%s”"
+msgstr "\"%s\" অনুসন্ধান করুন"
+
+# msgstr "সিস্টেমের ব্যবস্থাপনা"
+# msgstr "সিস্টেমের পরিচালনা"
+#: ../libyelp/yelp-location-entry.c:1458
+#| msgid "Loading..."
+msgid "Loading"
+msgstr "লোড করা হচ্ছে"
+
+#: ../libyelp/yelp-mallard-document.c:346
 #, c-format
 msgid "The directory ‘%s’ does not exist."
 msgstr "‘%s’ ডিরেক্টরিটি বর্তমানে অনুপস্থিত।"
 
-#: ../libyelp/yelp-search-entry.c:173
-msgid "View"
-msgstr "প্রদর্শন"
-
-#: ../libyelp/yelp-search-entry.c:174
-msgid "A YelpView instance to control"
-msgstr "নিয়ন্ত্রণযোগ্য একটি YelpView ইনস্ট্যান্স"
-
-#: ../libyelp/yelp-search-entry.c:189 ../src/yelp-window.c:399
-msgid "Bookmarks"
-msgstr "বুকমার্ক"
-
-#: ../libyelp/yelp-search-entry.c:190
-msgid "A YelpBookmarks implementation instance"
-msgstr "একটি YelpBookmarks বাস্তবায়নের ইনস্ট্যান্স"
-
-#: ../libyelp/yelp-search-entry.c:440
-#, c-format
-msgid "Search for “%s”"
-msgstr "\"%s\" অনুসন্ধান করুন"
-
-#: ../libyelp/yelp-settings.c:152
+#: ../libyelp/yelp-settings.c:154
+#| msgid "Settings"
 msgid "GtkSettings"
 msgstr "GtkSettings"
 
-#: ../libyelp/yelp-settings.c:153
+#: ../libyelp/yelp-settings.c:155
 msgid "A GtkSettings object to get settings from"
 msgstr "বৈশিষ্ট্য প্রাপ্ত করার জন্য ব্যবহারযোগ্য GtkSettings অবজেক্ট"
 
-#: ../libyelp/yelp-settings.c:161
+#: ../libyelp/yelp-settings.c:163
 msgid "GtkIconTheme"
 msgstr "GtkIconTheme"
 
-#: ../libyelp/yelp-settings.c:162
+#: ../libyelp/yelp-settings.c:164
 msgid "A GtkIconTheme object to get icons from"
 msgstr "আইকন প্রাপ্ত করার জন্য ব্যবহারযোগ্য GtkIconTheme অবজেক্ট"
 
-#: ../libyelp/yelp-settings.c:170
+#: ../libyelp/yelp-settings.c:172
 msgid "Font Adjustment"
 msgstr "ফন্ট সংক্রান্ত পরিবর্তন"
 
-#: ../libyelp/yelp-settings.c:171
+#: ../libyelp/yelp-settings.c:173
 msgid "A size adjustment to add to font sizes"
 msgstr "ফন্টের মাপে সংযোজন করার জন্য মাপের পরিবর্তন"
 
-#: ../libyelp/yelp-settings.c:179
+#: ../libyelp/yelp-settings.c:181
 msgid "Show Text Cursor"
 msgstr "টেক্সট কার্সার প্রদর্শন করা হবে"
 
-#: ../libyelp/yelp-settings.c:180
+#: ../libyelp/yelp-settings.c:182
 msgid "Show the text cursor or caret for accessible navigation"
 msgstr "চলাচলে সুবিধার জন্য টেক্সট কার্সার অথবা ক্যারেট প্রদর্শন করা হবে"
 
-#: ../libyelp/yelp-settings.c:188
+#: ../libyelp/yelp-settings.c:190
 msgid "Editor Mode"
 msgstr "এডিটর মোড"
 
-#: ../libyelp/yelp-settings.c:189
+#: ../libyelp/yelp-settings.c:191
 msgid "Enable features useful to editors"
 msgstr "এডিটরের ক্ষেত্রে সুবিধাজনক বৈশিষ্ট্য সক্রিয় করুন"
 
-#: ../libyelp/yelp-sqlite-storage.c:147
+#: ../libyelp/yelp-sqlite-storage.c:150
+#| msgid "Databases"
 msgid "Database filename"
 msgstr "ডাটাবেসের ফাইলের নাম"
 
-#: ../libyelp/yelp-sqlite-storage.c:148
+#: ../libyelp/yelp-sqlite-storage.c:151
 msgid "The filename of the sqlite database"
 msgstr "sqlite ডাটাবেসের ফাইলের নাম"
 
-#: ../libyelp/yelp-transform.c:169
+#: ../libyelp/yelp-transform.c:171
+#| msgid "Invalid Stylesheet"
 msgid "XSLT Stylesheet"
 msgstr "XSLT স্টাইল-শিট"
 
-#: ../libyelp/yelp-transform.c:170
+#: ../libyelp/yelp-transform.c:172
 msgid "The location of the XSLT stylesheet"
 msgstr "XSLT স্টাইল-শিটের অবস্থান"
 
-#: ../libyelp/yelp-transform.c:378 ../libyelp/yelp-transform.c:393
+#: ../libyelp/yelp-transform.c:379 ../libyelp/yelp-transform.c:394
 #, c-format
+#| msgid "The XSLT stylesheet ‘%s’ is either missing, or it is not valid."
 msgid "The XSLT stylesheet ‘%s’ is either missing or not valid."
 msgstr "XSLT স্টাইল-শিট ‘%s’ অনুপস্থিত অথবা বৈধ নয়।"
 
-#: ../libyelp/yelp-transform.c:527
+#: ../libyelp/yelp-transform.c:528
 msgid "No href attribute found on yelp:document\n"
 msgstr "yelp:document'র মধ্যে href অ্যাট্রিবিউট পাওয়া যায়নি\n"
 
-#: ../libyelp/yelp-transform.c:542
+#: ../libyelp/yelp-transform.c:543
 msgid "Out of memory"
 msgstr "মেমরি অবশিষ্ট নেই"
 
+#: ../libyelp/yelp-view.c:131
+#| msgid "Print"
+msgid "_Print..."
+msgstr "প্রিন্ট করুন... (_P)"
+
+# msgstr "জিনোম ২.০ সহায়ক তথ্য  প্রদর্শনকারী ব্রাউজার"
+#: ../libyelp/yelp-view.c:136
+msgid "_Back"
+msgstr "পূর্ববর্তী (_B)"
+
+# msgstr "হিস্টোরি থেকে পূর্ববর্তী পাতাটি দেখানো হোক"
+# msgstr "পূর্বে ব্যবহৃত পাতার তালিকা থেকে শেষ পাতাটি দেখানো হোক"
+#: ../libyelp/yelp-view.c:141
+msgid "_Forward"
+msgstr "পরবর্তী (_F)"
+
+# msgstr "_পরেরটা"
+#: ../libyelp/yelp-view.c:146
+#| msgid "_Previous Section"
+msgid "_Previous Page"
+msgstr "পূর্ববর্তী পৃষ্ঠা (_P)"
+
+#: ../libyelp/yelp-view.c:151
+#| msgid "_Next Section"
+msgid "_Next Page"
+msgstr "পরবর্তী পৃষ্ঠা (_N)"
+
 # msgstr "_আগেরটা"
-#: ../libyelp/yelp-view.c:446
+#: ../libyelp/yelp-view.c:423
+#| msgid "Yelp"
 msgid "Yelp URI"
 msgstr "Yelp URI"
 
-#: ../libyelp/yelp-view.c:447
+#: ../libyelp/yelp-view.c:424
 msgid "A YelpUri with the current location"
 msgstr "বর্তমান অবস্থান সহ YelpUri"
 
 # msgstr "সিস্টেমের ব্যবস্থাপনা"
 # msgstr "সিস্টেমের পরিচালনা"
-#: ../libyelp/yelp-view.c:455
+#: ../libyelp/yelp-view.c:432
+#| msgid "Loading..."
 msgid "Loading State"
 msgstr "অবস্থা লোড করা হচ্ছে"
 
-#: ../libyelp/yelp-view.c:456
+#: ../libyelp/yelp-view.c:433
 msgid "The loading state of the view"
 msgstr "প্রদর্শনের অবস্থা লোড করা হচ্ছে"
 
-#: ../libyelp/yelp-view.c:465
+#: ../libyelp/yelp-view.c:442
 msgid "Page ID"
 msgstr "পৃষ্ঠার ID"
 
-#: ../libyelp/yelp-view.c:466
+#: ../libyelp/yelp-view.c:443
 msgid "The ID of the root page of the page being viewed"
 msgstr "প্রদর্শিত পৃষ্ঠার মূল পৃষ্ঠার ID"
 
-#: ../libyelp/yelp-view.c:474
+#: ../libyelp/yelp-view.c:451
 msgid "Root Title"
 msgstr "মূল পৃষ্ঠার শিরোনাম"
 
-#: ../libyelp/yelp-view.c:475
+#: ../libyelp/yelp-view.c:452
 msgid "The title of the root page of the page being viewed"
 msgstr "প্রদর্শিত পৃষ্ঠার মূল পৃষ্ঠার শিরোনাম"
 
-#: ../libyelp/yelp-view.c:483
+#: ../libyelp/yelp-view.c:460
 msgid "Page Title"
 msgstr "পৃষ্ঠার শিরোনাম"
 
-#: ../libyelp/yelp-view.c:484
+#: ../libyelp/yelp-view.c:461
 msgid "The title of the page being viewed"
 msgstr "প্রদর্শিত পৃষ্ঠার শিরোনাম"
 
-#: ../libyelp/yelp-view.c:492
+#: ../libyelp/yelp-view.c:469
 msgid "Page Description"
 msgstr "পৃষ্ঠার বিবরণ"
 
-#: ../libyelp/yelp-view.c:493
+#: ../libyelp/yelp-view.c:470
 msgid "The description of the page being viewed"
 msgstr "প্রদর্শিত পৃষ্ঠার বিবরণ"
 
-#: ../libyelp/yelp-view.c:501
+#: ../libyelp/yelp-view.c:478
+#| msgid "Page not found"
 msgid "Page Icon"
 msgstr "পৃষ্ঠার আইকন"
 
-#: ../libyelp/yelp-view.c:502
+#: ../libyelp/yelp-view.c:479
 msgid "The icon of the page being viewed"
 msgstr "প্রদর্শিত পৃষ্ঠার আইকন"
 
-#: ../libyelp/yelp-view.c:744
+#: ../libyelp/yelp-view.c:720
 msgid "You do not have PackageKit. Package install links require PackageKit."
 msgstr ""
 "PackageKit ইনস্টল করা হয়নি। প্যাকেজ ইনস্টলেশনের লিংকের ক্ষেত্রে PackageKit-র "
 "উপস্থিতি আবশ্যক।"
 
-#: ../libyelp/yelp-view.c:1040
+#: ../libyelp/yelp-view.c:1013
 msgid "Save Image"
 msgstr "ছবি সংরক্ষণ করুন"
 
-#: ../libyelp/yelp-view.c:1135
+#: ../libyelp/yelp-view.c:1108
 msgid "Save Code"
 msgstr "কোড সংরক্ষণ করুন"
 
-#: ../libyelp/yelp-view.c:1298
+#: ../libyelp/yelp-view.c:1271
 #, c-format
 msgid "Send email to %s"
 msgstr "%s-এ ই-মেইল পাঠিয়ে দিন"
 
 # msgstr "ক্যাটেগরি"
-#: ../libyelp/yelp-view.c:1313
+#: ../libyelp/yelp-view.c:1286
+#| msgid "Manual Pages"
 msgid "_Install Packages"
 msgstr "প্যাকেজ ইনস্টল করুন (_I)"
 
-#: ../libyelp/yelp-view.c:1321
+#: ../libyelp/yelp-view.c:1294
 msgid "_Open Link"
 msgstr "লিঙ্ক খুলুন (_O)"
 
-#: ../libyelp/yelp-view.c:1328
+#: ../libyelp/yelp-view.c:1301
+#| msgid "Open Location"
 msgid "_Copy Link Location"
 msgstr "লিংকের অবস্থান কপি করুন (_C)"
 
-#: ../libyelp/yelp-view.c:1334
+#: ../libyelp/yelp-view.c:1307
+#| msgid "Open Link in _New Window"
 msgid "Open Link in New _Window"
 msgstr "নতুন উইন্ডোর মধ্যে লিংক প্রদর্শন করা হবে (_W)"
 
-#: ../libyelp/yelp-view.c:1388
-#| msgid "_Save Image As..."
-msgid "_Save Image As…"
+#: ../libyelp/yelp-view.c:1359
+msgid "_Save Image As..."
 msgstr "নতুন রূপে ছবি সংরক্ষণ করুন...(_S)"
 
-#: ../libyelp/yelp-view.c:1390
-#| msgid "_Save Video As..."
-msgid "_Save Video As…"
+#: ../libyelp/yelp-view.c:1361
+msgid "_Save Video As..."
 msgstr "নতুন রূপে ভিডিও সংরক্ষণ...(_S)"
 
-#: ../libyelp/yelp-view.c:1397
-#| msgid "S_end Image To..."
-msgid "S_end Image To…"
-msgstr "এখানে ছবি পাঠান (_e)…"
+#: ../libyelp/yelp-view.c:1368
+msgid "S_end Image To..."
+msgstr "চিহ্নিত স্থানে ছবি পাঠানো হবে...(_e)"
 
-#: ../libyelp/yelp-view.c:1399
-#| msgid "S_end Video To..."
-msgid "S_end Video To…"
-msgstr "এখানে ভিডিও পাঠান (_e)…"
+#: ../libyelp/yelp-view.c:1370
+msgid "S_end Video To..."
+msgstr "চিহ্নিত স্থানে ভিডিও পাঠানো হবে...(_e)"
 
-#: ../libyelp/yelp-view.c:1410
+#: ../libyelp/yelp-view.c:1381
+#| msgid "_Copy"
 msgid "_Copy Text"
 msgstr "টেক্সট কপি করুন (_C)"
 
-#: ../libyelp/yelp-view.c:1423
+#: ../libyelp/yelp-view.c:1394
 msgid "C_opy Code Block"
 msgstr "কোড ব্লক কপি করুন (_o)"
 
-#: ../libyelp/yelp-view.c:1428
-#| msgid "Save Code _Block As..."
-msgid "Save Code _Block As…"
-msgstr "কোড ব্লক এইরূপে সংরক্ষণ করুন (_B)…"
+#: ../libyelp/yelp-view.c:1399
+msgid "Save Code _Block As..."
+msgstr "নতুন রূপে কোড ব্লক সংরক্ষণ...(_B)"
 
-#: ../libyelp/yelp-view.c:1535
+#: ../libyelp/yelp-view.c:1505
 #, c-format
+#| msgid "Search results for \"%s\""
 msgid "See all search results for “%s”"
 msgstr "\"%s\" -র সকল অনুসন্ধানের ফলাফল প্রদর্শন"
 
-#: ../libyelp/yelp-view.c:1656
+#: ../libyelp/yelp-view.c:1626
 #, c-format
 msgid "Could not load a document for ‘%s’"
 msgstr "‘%s’-র জন্য ডকুমেন্ট লোড করা যায়নি"
 
-#: ../libyelp/yelp-view.c:1662
+#: ../libyelp/yelp-view.c:1632
 #, c-format
 msgid "Could not load a document"
 msgstr "ডকুমেন্ট লোড করা যায়নি"
 
-#: ../libyelp/yelp-view.c:1737
+#: ../libyelp/yelp-view.c:1706
+#| msgid "Document Sections"
 msgid "Document Not Found"
 msgstr "ডকুমেন্ট পাওয়া যায়নি"
 
-#: ../libyelp/yelp-view.c:1739
+#: ../libyelp/yelp-view.c:1708
+#| msgid "Page not found"
 msgid "Page Not Found"
 msgstr "পৃষ্ঠা পাওয়া যায়নি"
 
-#: ../libyelp/yelp-view.c:1742
+#: ../libyelp/yelp-view.c:1711
+#| msgid "Cannot create window"
 msgid "Cannot Read"
 msgstr "পড়া সম্ভব নয়"
 
-#: ../libyelp/yelp-view.c:1748
+#: ../libyelp/yelp-view.c:1717
 msgid "Unknown Error"
 msgstr "অজানা ত্রুটি"
 
-#: ../libyelp/yelp-view.c:1768
+#: ../libyelp/yelp-view.c:1737
+#| msgid "Search for other documentation"
 msgid "Search for packages containing this document."
 msgstr "চিহ্নিত ডকুমেন্ট ধারণকারী প্যাকেজ অনুসন্ধান।"
 
-#: ../libyelp/yelp-view.c:1918
+#: ../libyelp/yelp-view.c:1890
 #, c-format
+#| msgid "The file ‘%s’ does not exist."
 msgid "The URI ‘%s’ does not point to a valid page."
 msgstr "URI ‘%s’ দ্বারা কোনো বৈধ পৃষ্ঠা নির্দেশ করা হয় না।"
 
-#: ../libyelp/yelp-view.c:1924
+#: ../libyelp/yelp-view.c:1896
 #, c-format
 msgid "The URI does not point to a valid page."
 msgstr "URI দ্বারা কোনো বৈধ পৃষ্ঠা নির্দেশ করা হয় না।"
 
-#: ../libyelp/yelp-view.c:1930
+#: ../libyelp/yelp-view.c:1902
 #, c-format
+#| msgid "The file ‘%s’ does not exist."
 msgid "The URI ‘%s’ could not be parsed."
 msgstr "URI ‘%s’ পার্স করা যায়নি।"
 
-#: ../src/yelp-application.c:59
+#: ../src/yelp-application.c:65
 msgid "Turn on editor mode"
 msgstr "এডিটর মোড চালু করুন"
 
+#: ../src/yelp-application.c:128
+msgid "_Larger Text"
+msgstr "বড় হরফের লেখা (_L)"
+
+#: ../src/yelp-application.c:130
+msgid "Increase the size of the text"
+msgstr "লেখার হরফের মাপ বৃদ্ধি করুন"
+
+#: ../src/yelp-application.c:133
+msgid "_Smaller Text"
+msgstr "ছোট হরফের লেখা (_S)"
+
+#: ../src/yelp-application.c:135
+msgid "Decrease the size of the text"
+msgstr "লেখার হরফের মাপ হ্রাস করুন"
+
 # msgstr "জিনোমের মধ্যে দেয়া সহায়ক তথ্য গ্ড়গ্রহণ করুন"
-#: ../src/yelp-application.c:272 ../src/yelp-window.c:1165
+#: ../src/yelp-application.c:253 ../src/yelp-window.c:1360
 #: ../yelp.desktop.in.in.h:1
 msgid "Help"
 msgstr "সাহায্য"
 
-#: ../src/yelp-application.c:322
-#| msgid "_New Window"
-msgid "New Window"
-msgstr "নতুন উইন্ডো"
+#: ../src/yelp-application.c:288
+msgid "Show Text _Cursor"
+msgstr "টেক্সট কার্সার প্রদর্শন করা হবে (_C)"
 
-#: ../src/yelp-application.c:326
-#| msgid "_Larger Text"
-msgid "Larger Text"
-msgstr "বড় হরফের লেখা"
+#: ../src/yelp-window.c:236
+msgid "_Page"
+msgstr "পৃষ্ঠা (_P)"
 
-#: ../src/yelp-application.c:327
-#| msgid "_Smaller Text"
-msgid "Smaller Text"
-msgstr "ছোট হরফের লেখা"
+#: ../src/yelp-window.c:237
+#| msgid "Viewer"
+msgid "_View"
+msgstr "প্রদর্শন (_V)"
 
-#: ../src/yelp-window.c:206
+# msgstr "/_সম্পাদনা/_আবার খুঁজুন"
+# msgstr "/_সম্পাদনা/_আবার অনুসন্ধান করুন"
+#: ../src/yelp-window.c:238
+msgid "_Go"
+msgstr "গন্তব্য (_G)"
+
+#: ../src/yelp-window.c:239
+msgid "_Bookmarks"
+msgstr "বুকমার্ক (_B)"
+
+#: ../src/yelp-window.c:242
+msgid "_New Window"
+msgstr "নতুন উইন্ডো (_N)"
+
+#: ../src/yelp-window.c:247
+#| msgid "Clocks"
+msgid "_Close"
+msgstr "বন্ধ করুন (_C)"
+
+#: ../src/yelp-window.c:252
+#| msgid "About This Document"
+msgid "_All Documents"
+msgstr "সর্বধরনের ডকুমেন্ট (_A)"
+
+#: ../src/yelp-window.c:256
+msgid "_Add Bookmark"
+msgstr "বুকমার্ক যোগ করুন (_A)"
+
+#: ../src/yelp-window.c:261
+#| msgid "Remove Bookmark"
+msgid "_Remove Bookmark"
+msgstr "বুকমার্ক মুছে ফেলুন (_R)"
+
+#: ../src/yelp-window.c:265
+#| msgid "Print This Page ..."
+msgid "Find in Page..."
+msgstr "পৃষ্ঠায় সন্ধান করুন..."
+
+#: ../src/yelp-window.c:275
+msgid "Open Location"
+msgstr "অবস্থান খুলুন"
+
+#: ../src/yelp-window.c:301
+#| msgid "Applications"
 msgid "Application"
 msgstr "অ্যাপ্লিকেশন"
 
-#: ../src/yelp-window.c:207
+#: ../src/yelp-window.c:302
 msgid "A YelpApplication instance that controls this window"
 msgstr "এই উইন্ডো নিয়ন্ত্রণ করার জন্য ব্যবহৃত YelpApplication ইনস্ট্যান্স"
 
-# msgstr "জিনোম ২.০ সহায়ক তথ্য  প্রদর্শনকারী ব্রাউজার"
-#: ../src/yelp-window.c:325
-#| msgid "_Back"
-msgid "Back"
-msgstr "ফিরুন"
+#: ../src/yelp-window.c:429
+msgid "Read Link _Later"
+msgstr "লিংকের তথ্য পরে পড়া হবে (_L)"
 
-# msgstr "হিস্টোরি থেকে পূর্ববর্তী পাতাটি দেখানো হোক"
-# msgstr "পূর্বে ব্যবহৃত পাতার তালিকা থেকে শেষ পাতাটি দেখানো হোক"
-#: ../src/yelp-window.c:332
-#| msgid "_Forward"
-msgid "Forward"
-msgstr "ফরওয়ার্ড"
+#: ../src/yelp-window.c:526
+#| msgid "Fin_d:"
+msgid "Find:"
+msgstr "অনুসন্ধান:"
 
-#: ../src/yelp-window.c:343
-msgid "Menu"
-msgstr "মেনু"
+#: ../src/yelp-window.c:548
+msgid "Read Later"
+msgstr "পড়ে পড়া হবে"
 
-#: ../src/yelp-window.c:348
-#| msgid "Find:"
-msgid "Find…"
-msgstr "খুঁজুন…"
+#: ../src/yelp-window.c:1180
+#, c-format
+msgid "%i match"
+msgid_plural "%i matches"
+msgstr[0] "%i-টি মিল"
+msgstr[1] "%i-টি মিল"
 
-#: ../src/yelp-window.c:349
-msgid "Print…"
-msgstr "মুদ্রণ…"
-
-# msgstr "_পরেরটা"
-#: ../src/yelp-window.c:354
-#| msgid "_Previous Page"
-msgid "Previous Page"
-msgstr "পূর্ববর্তী পৃষ্ঠা"
-
-#: ../src/yelp-window.c:355
-#| msgid "_Next Page"
-msgid "Next Page"
-msgstr "পরবর্তী পৃষ্ঠা"
-
-# msgstr "জিনোমের মধ্যে দেয়া সহায়ক তথ্য গ্ড়গ্রহণ করুন"
-#: ../src/yelp-window.c:360
-#| msgid "Help"
-msgid "All Help"
-msgstr "সমস্ত সাহায্য"
-
-#: ../src/yelp-window.c:382
-msgid "Search (Ctrl+S)"
-msgstr "অনুসন্ধান (Ctrl+S)"
-
-#: ../src/yelp-window.c:416
-#| msgid "Bookmarks"
-msgid "No bookmarks"
-msgstr "কোনো বুকমার্ক নেই"
-
-#: ../src/yelp-window.c:424
-#| msgid "_Add Bookmark"
-msgid "Add Bookmark"
-msgstr "বুকমার্ক যোগ করুন"
-
-#: ../src/yelp-window.c:430
-#| msgid "_Remove Bookmark"
-msgid "Remove Bookmark"
-msgstr "বুকমার্ক মুছে ফেলুন"
+#: ../src/yelp-window.c:1189
+msgid "No matches"
+msgstr "মিল পাওয়া যায়নি"
 
 # msgstr "সূচকে খুঁজুন"
 # msgstr "ইনডেকসে খুঁজুন"
@@ -514,85 +616,992 @@ msgstr "বুকমার্ক মুছে ফেলুন"
 msgid "Get help with GNOME"
 msgstr "GNOME থেকে সহায়তা প্রাপ্ত করুন"
 
-#: ../yelp.desktop.in.in.h:3
-msgid "documentation;information;manual;"
-msgstr "নথিপত্র;তথ্য;ম্যানুয়াল;"
+# msgstr "ম্যানুয়াল পেজ"
+#~ msgid "GNU Info Pages"
+#~ msgstr "GNU সংক্রান্ত তথ্যসহ পৃষ্ঠা"
 
-#~ msgid "Enable Search"
-#~ msgstr "অনুসন্ধান সক্রিয় করুন"
+#~ msgid "Traditional command line help (info)"
+#~ msgstr "পারম্পিক কমান্ড-লাইন থেকে প্রাপ্ত সহায়িকা (info)"
 
-#~ msgid "Whether the location entry can be used as a search field"
-#~ msgstr "অনুসন্ধানের ক্ষেত্র হিসাবে অবস্থান সুচক এনট্রিটি ব্যবহার করা যাবে কি না"
+#~ msgid "BLT Functions"
+#~ msgstr "BLT ফাংশান"
 
-# msgstr "সেকশন"
-#~ msgid "Search..."
-#~ msgstr "অনুসন্ধান..."
+# msgstr "হার্ডওয়্যার যন্ত্র"
+#~ msgid "Configuration Files"
+#~ msgstr "কনফিগারেশন ফাইল"
 
-#~ msgid "Clear the search text"
-#~ msgstr "অনুসন্ধান করা লেখা মুছে ফেলা হবে"
+#~ msgid "Curses Functions"
+#~ msgstr "Curses ফাংশান"
 
-#~ msgid "Bookmark this page"
-#~ msgstr "বর্তমান পৃষ্ঠা বুকমার্ক করুন"
+#~ msgid "Development"
+#~ msgstr "ডিভেলপমেন্ট"
 
-#~ msgid "Remove bookmark"
-#~ msgstr "বুকমার্ক মুছে ফেলুন"
+#~ msgid "FORTRAN Functions"
+#~ msgstr "FORTRAN ফাংশান"
 
-# msgstr "সিস্টেমের ব্যবস্থাপনা"
-# msgstr "সিস্টেমের পরিচালনা"
-#~ msgid "Loading"
-#~ msgstr "লোড করা হচ্ছে"
+#~ msgid "Games"
+#~ msgstr "খেলা"
 
-#~ msgid "_Print..."
-#~ msgstr "প্রিন্ট করুন... (_P)"
+# msgstr "তৈরী / উন্নয়ন"
+#~ msgid "Hardware Devices"
+#~ msgstr "হার্ডওয়্যার ডিভাইস"
 
-#~ msgid "Don't steal focus"
-#~ msgstr "নজর সরাবেন না"
+#~ msgid "Kernel Routines"
+#~ msgstr "কার্নেলের রুটিন"
 
-#~ msgid "Increase the size of the text"
-#~ msgstr "লেখার হরফের মাপ বৃদ্ধি করুন"
+#~ msgid "Network Audio Sound Functions"
+#~ msgstr "নেটওয়ার্ক অডিও শব্দের ফাংশান"
 
-#~ msgid "Decrease the size of the text"
-#~ msgstr "লেখার হরফের মাপ হ্রাস করুন"
+#~ msgid "OpenSSL Applications"
+#~ msgstr "OpenSSL অ্যাপ্লিকেশন"
 
-#~ msgid "Show Text _Cursor"
-#~ msgstr "টেক্সট কার্সার প্রদর্শন করা হবে (_C)"
+# msgstr "হার্ডওয়্যার যন্ত্র"
+#~ msgid "OpenSSL Configuration"
+#~ msgstr "OpenSSL কনফিগারেশন"
 
-#~ msgid "_Page"
-#~ msgstr "পৃষ্ঠা (_P)"
+#~ msgid "OpenSSL Functions"
+#~ msgstr "OpenSSL ফাংশান"
 
-#~ msgid "_View"
-#~ msgstr "প্রদর্শন (_V)"
+#~ msgid "OpenSSL Overviews"
+#~ msgstr "OpenSSL'র সারাংশ"
 
-# msgstr "/_সম্পাদনা/_আবার খুঁজুন"
-# msgstr "/_সম্পাদনা/_আবার অনুসন্ধান করুন"
-#~ msgid "_Go"
-#~ msgstr "গন্তব্য (_G)"
+#~ msgid "Overviews"
+#~ msgstr "সারাংশ"
 
-#~ msgid "_Bookmarks"
-#~ msgstr "বুকমার্ক (_B)"
+#~ msgid "POSIX Functions"
+#~ msgstr "POSIX ফাংশন"
 
-#~ msgid "_Close"
-#~ msgstr "বন্ধ করুন (_C)"
+#~ msgid "POSIX Headers"
+#~ msgstr "POSIX হেডার"
 
-#~ msgid "_All Documents"
-#~ msgstr "সর্বধরনের ডকুমেন্ট (_A)"
+#~ msgid "Perl Functions"
+#~ msgstr "Perl ফাংশান"
 
-#~ msgid "Find in Page..."
-#~ msgstr "পৃষ্ঠায় সন্ধান করুন..."
+#~ msgid "Qt Functions"
+#~ msgstr "Qt ফাংশান"
 
-#~ msgid "Open Location"
-#~ msgstr "অবস্থান খুলুন"
+#~ msgid "Readline Functions"
+#~ msgstr "Readline ফাংশান"
 
-#~ msgid "Read Link _Later"
-#~ msgstr "লিংকের তথ্য পরে পড়া হবে (_L)"
+#~ msgid "Section 0p"
+#~ msgstr "বিভাগ 0p"
 
-#~ msgid "Read Later"
-#~ msgstr "পড়ে পড়া হবে"
+#~ msgid "Section 1m"
+#~ msgstr "বিভাগ 1m"
 
-#~ msgid "%i match"
-#~ msgid_plural "%i matches"
-#~ msgstr[0] "%i-টি মিল"
-#~ msgstr[1] "%i-টি মিল"
+#~ msgid "Section 1ssl"
+#~ msgstr "বিভাগ 1ssl"
 
-#~ msgid "No matches"
-#~ msgstr "মিল পাওয়া যায়নি"
+#~ msgid "Section 1x"
+#~ msgstr "বিভাগ 1x"
+
+#~ msgid "Section 2"
+#~ msgstr "বিভাগ 2"
+
+#~ msgid "Section 3blt"
+#~ msgstr "বিভাগ 3blt"
+
+#~ msgid "Section 3f"
+#~ msgstr "বিভাগ 3f"
+
+#~ msgid "Section 3nas"
+#~ msgstr "বিভাগ 3nas"
+
+#~ msgid "Section 3p"
+#~ msgstr "বিভাগ 3p"
+
+#~ msgid "Section 3qt"
+#~ msgstr "বিভাগ 3qt"
+
+#~ msgid "Section 3readline"
+#~ msgstr "বিভাগ 3readline"
+
+#~ msgid "Section 3ssl"
+#~ msgstr "বিভাগ 3ssl"
+
+#~ msgid "Section 3tiff"
+#~ msgstr "বিভাগ 3tiff"
+
+#~ msgid "Section 4"
+#~ msgstr "বিভাগ 4"
+
+#~ msgid "Section 4x"
+#~ msgstr "বিভাগ 4x"
+
+#~ msgid "Section 5"
+#~ msgstr "বিভাগ 5"
+
+#~ msgid "Section 5ssl"
+#~ msgstr "বিভাগ 5ssl"
+
+#~ msgid "Section 5x"
+#~ msgstr "বিভাগ 5x"
+
+#~ msgid "Section 6"
+#~ msgstr "বিভাগ 6"
+
+#~ msgid "Section 6x"
+#~ msgstr "বিভাগ 6x"
+
+#~ msgid "Section 7ssl"
+#~ msgstr "বিভাগ 7ssl"
+
+#~ msgid "Section 7x"
+#~ msgstr "বিভাগ 7x"
+
+#~ msgid "Section 9"
+#~ msgstr "বিভাগ 9"
+
+#~ msgid "Sections 1, 1p, 1g and 1t"
+#~ msgstr "বিভাগ 1, 1p, 1g ও 1t"
+
+#~ msgid "Sections 3, 3o, and 3t"
+#~ msgstr "বিভাগ 3, 3o ও 3t"
+
+#~ msgid "Sections 3form and 3menu"
+#~ msgstr "বিভাগ 3form ও 3menu"
+
+#~ msgid "Sections 3ncurses and 3curses"
+#~ msgstr "বিভাগ 3ncurses ও 3curses"
+
+#~ msgid "Sections 3pm and 3perl"
+#~ msgstr "বিভাগ 3pm ও 3perl"
+
+#~ msgid "Sections 3x and 3X11"
+#~ msgstr "বিভাগ 3x ও 3X11"
+
+#~ msgid "Sections 7 and 7gcc"
+#~ msgstr "বিভাগ 7 ও 7gcc"
+
+#~ msgid "Sections 8 and 8l"
+#~ msgstr "বিভাগ 8 ও 8l"
+
+#~ msgid "System Administration"
+#~ msgstr "সিস্টেম সংক্রান্ত প্রশাসনিক কর্ম"
+
+#~ msgid "System Calls"
+#~ msgstr "সিস্টেম কল"
+
+#~ msgid "System V Form/Menu Functions"
+#~ msgstr "System V ফর্ম/মেনু ফাংশান"
+
+#~ msgid "TIFF Functions"
+#~ msgstr "TIFF ফাংশান"
+
+#~ msgid "Termcap Applications"
+#~ msgstr "Termcap অ্যাপ্লিকেশন"
+
+#~ msgid "Traditional command line help (man)"
+#~ msgstr "পারম্পিক কমান্ড-লাইন থেকে প্রাপ্ত সহায়িকা (man)"
+
+#~ msgid "X11 Applications"
+#~ msgstr "X11 অ্যাপ্লিকেশন"
+
+# msgstr "হার্ডওয়্যার যন্ত্র"
+#~ msgid "X11 Configuration"
+#~ msgstr "X11 কনফিগারেশন"
+
+#~ msgid "X11 Devices"
+#~ msgstr "X11 ডিভাইস"
+
+#~ msgid "X11 Functions"
+#~ msgstr "X11 ফাংশান"
+
+#~ msgid "X11 Games"
+#~ msgstr "X11 খেলা"
+
+#~ msgid "X11 Overviews"
+#~ msgstr "X11'র সারাংশ"
+
+#~ msgid "2D Graphics"
+#~ msgstr "২ডি গ্রাফিক্স"
+
+#~ msgid "3D Graphics"
+#~ msgstr "৩ডি গ্রাফিক্স"
+
+#~ msgid "Accessibility"
+#~ msgstr "সহায়ক প্রযুক্তি"
+
+#~ msgid "Action Games"
+#~ msgstr "অ্যাকশেনের খেলা"
+
+#~ msgid "Adventure Games"
+#~ msgstr "অ্যাডভেঞ্চারের খেলা"
+
+#~ msgid "Amusement"
+#~ msgstr "বিনোদন"
+
+#~ msgid "Applications for viewing and manipulating graphics"
+#~ msgstr "গ্রাফিক্স প্রদর্শন ও পরিবর্তনের জন্য ব্যবহৃত অ্যাপ্লিকেশন"
+
+#~ msgid "Applications related to audio and video"
+#~ msgstr "অডিও ও ভিডিও সম্পর্কিত অ্যাপ্লিকেশন"
+
+#~ msgid "Applications that teach or aid in learning"
+#~ msgstr "শিক্ষায় সহায়ক অ্যাপ্লিকেশন"
+
+#~ msgid "Arcade Games"
+#~ msgstr "আর্কেডের খেলা"
+
+#~ msgid "Archiving Tools"
+#~ msgstr "আর্কাইভ করতে ব্যবহৃত সামগ্রী"
+
+#~ msgid "Art"
+#~ msgstr "শিল্প"
+
+#~ msgid "Artificial Intelligence"
+#~ msgstr "কৃতিম মেধা"
+
+#~ msgid "Astronomy"
+#~ msgstr "জ্যোতির্বিদ্যা"
+
+#~ msgid "Biology"
+#~ msgstr "জীববিজ্ঞান"
+
+#~ msgid "Blocks Games"
+#~ msgstr "টালির খেলা"
+
+#~ msgid "Board Games"
+#~ msgstr "বোর্ডের খেলা"
+
+#~ msgid "Building"
+#~ msgstr "নির্মাণকার্য"
+
+#~ msgid "Calculator"
+#~ msgstr "ক্যালকুলেটর"
+
+#~ msgid "Calendar"
+#~ msgstr "বর্ষপঞ্জি"
+
+#~ msgid "Card Games"
+#~ msgstr "তাশের খেলা"
+
+#~ msgid "Charting Tools"
+#~ msgstr "চার্ট নির্মাণের সামগ্রী"
+
+#~ msgid "Chat"
+#~ msgstr "আলাপন"
+
+#~ msgid "Chemistry"
+#~ msgstr "রসায়ণ"
+
+#~ msgid "Compression Tools"
+#~ msgstr "কম্প্রেশন করতে ব্যবহৃত সামগ্রী"
+
+#~ msgid "Computer Science"
+#~ msgstr "কম্পিউটার বিজ্ঞান"
+
+#~ msgid "Construction"
+#~ msgstr "নির্মাণকার্য"
+
+#~ msgid "Contact Management"
+#~ msgstr "পরিচিতি পরিচালনা"
+
+#~ msgid "Data Visualization"
+#~ msgstr "ডাটা ভিশুয়ালাইজেশন"
+
+#~ msgid "Debuggers"
+#~ msgstr "ডিবাগ ব্যবস্থা"
+
+# msgstr "সাহায্যের পরিমাণ"
+#~ msgid "Desktop"
+#~ msgstr "ডেস্কটপ"
+
+# msgstr "সাহায্যের পরিমাণ"
+#~ msgid "Desktop Settings"
+#~ msgstr "ডেস্কটপের বৈশিষ্ট্য"
+
+#~ msgid "Dialup"
+#~ msgstr "ডায়াল-আপ"
+
+#~ msgid "Dictionaries"
+#~ msgstr "অভিধান"
+
+#~ msgid "Disc Burning"
+#~ msgstr "ডিস্ক বার্ন করার প্রণালী"
+
+#~ msgid "Economy"
+#~ msgstr "অর্থব্যবস্থা"
+
+#~ msgid "Education"
+#~ msgstr "শিক্ষা"
+
+#~ msgid "Electricity"
+#~ msgstr "বিদ্যুৎ"
+
+#~ msgid "Electronics"
+#~ msgstr "ইলেকট্রনিক"
+
+#~ msgid "Email Tools"
+#~ msgstr "ই-মেইলের বিভিন্ন সরঞ্জাম"
+
+#~ msgid "Emulator"
+#~ msgstr "এমুলেটর"
+
+#~ msgid "Engineering"
+#~ msgstr "প্রকৌশল"
+
+#~ msgid "File Manager"
+#~ msgstr "ফাইল পরিচালন ব্যবস্থা"
+
+#~ msgid "File Tools"
+#~ msgstr "ফাইল সংক্রান্ত সরঞ্জাম"
+
+#~ msgid "File Transfer"
+#~ msgstr "ফাইল আদান-প্রদান"
+
+#~ msgid "Filesystem"
+#~ msgstr "ফাইল-সিস্টেম"
+
+#~ msgid "Financial Tools"
+#~ msgstr "ব্যবসায়িক সামগ্রী"
+
+#~ msgid "Flow Charting Tools"
+#~ msgstr "ফ্লো-চার্টের সামগ্রী"
+
+#~ msgid "GNOME Applications"
+#~ msgstr "GNOME অ্যাপ্লিকেশন"
+
+#~ msgid "GTK"
+#~ msgstr "GTK"
+
+#~ msgid "GUI Designers"
+#~ msgstr "GUI ডিজাইন ব্যবস্থা"
+
+#~ msgid "Generic applications for the GNOME environment"
+#~ msgstr "GNOME ডেস্কটপ পরিবেশের জন্য সাধারণ অ্যাপ্লিকেশন সংকলন"
+
+#~ msgid "Generic applications for the KDE environment"
+#~ msgstr "KDE ডেস্কটপ পরিবেশের জন্য সাধারণ অ্যাপ্লিকেশন সংকলন"
+
+#~ msgid "Geography"
+#~ msgstr "ভূগোল"
+
+#~ msgid "Geology"
+#~ msgstr "ভূতত্ত্ব"
+
+#~ msgid "Geoscience"
+#~ msgstr "ভূ বিজ্ঞান"
+
+#~ msgid "Graphics"
+#~ msgstr "গ্রাফিক্স"
+
+#~ msgid ""
+#~ "Guides and manuals for applications that connect to the outside world"
+#~ msgstr ""
+#~ "বাহির জগতের সাথে সংযোগ স্থাপন করতে ব্যবহৃত অ্যাপ্লিকেশনের জন্য সহায়ক নথিপত্র"
+
+#~ msgid "Guides for getting involved in development"
+#~ msgstr "ডিভেলপমেন্ট আরম্ভের জন্য সহায়ক নথিপত্র"
+
+#~ msgid "Ham Radio"
+#~ msgstr "হ্যাম রেডিও"
+
+# msgstr "তৈরী / উন্নয়ন"
+#~ msgid "Hardware Settings"
+#~ msgstr "হার্ডওয়্যার সংক্রান্ত বৈশিষ্ট্য"
+
+#~ msgid "Have some fun"
+#~ msgstr "কিছু মজাদার জিনিস"
+
+#~ msgid "History"
+#~ msgstr "পূর্ববর্তী তথ্য"
+
+#~ msgid "IDEs"
+#~ msgstr "বিবিধ IDE"
+
+#~ msgid "IRC Clients"
+#~ msgstr "IRC ক্লায়েন্ট"
+
+#~ msgid "Image Processing"
+#~ msgstr "ছবি প্রসেসিং"
+
+#~ msgid "Instant Messaging"
+#~ msgstr "ইনস্ট্যান্ট বার্তালাপ"
+
+# msgstr "_অনুসন্ধান হচ্ছেঃ "
+#~ msgid "Internet"
+#~ msgstr "ইন্টারনেট"
+
+#~ msgid "Java"
+#~ msgstr "Java"
+
+#~ msgid "KDE Applications"
+#~ msgstr "KDE অ্যাপ্লিকেশন"
+
+#~ msgid "Kids Games"
+#~ msgstr "ছোটদের খেলা"
+
+#~ msgid ""
+#~ "Learn more about making your system more accessible for a range of "
+#~ "disabilities"
+#~ msgstr ""
+#~ "বিভিন্ন ধরনের বিশেষ ব্যবহারের উদ্দেশ্যে নিজের সিস্টেম প্রস্তুত করার প্রণালী জেনে "
+#~ "নিন"
+
+#~ msgid "Licenses"
+#~ msgstr "লাইসেন্স"
+
+#~ msgid "Literature"
+#~ msgstr "সাহিত্য"
+
+#~ msgid "Logic Games"
+#~ msgstr "লজিকের খেলা"
+
+#~ msgid "Math"
+#~ msgstr "অঙ্ক"
+
+#~ msgid "Medical Software"
+#~ msgstr "চিকিৎসা সংক্রান্ত সফ্টওয়্যার"
+
+#~ msgid "Midi"
+#~ msgstr "Midi"
+
+#~ msgid "Miscellaneous Documentation"
+#~ msgstr "বিবিধ নথিপত্র"
+
+#~ msgid "Mixers"
+#~ msgstr "মিক্সার"
+
+#~ msgid "Monitor"
+#~ msgstr "মনিটর"
+
+#~ msgid "Motif"
+#~ msgstr "মটিফ"
+
+#~ msgid "Music"
+#~ msgstr "সংগীত"
+
+#~ msgid "News"
+#~ msgstr "খবরাখবর"
+
+#~ msgid "Numerical Analysis"
+#~ msgstr "সংখ্যামূলক বিশ্লেষণ"
+
+#~ msgid "OCR"
+#~ msgstr "OCR"
+
+#~ msgid "Office Applications"
+#~ msgstr "অফিস অ্যাপ্লিকেশন"
+
+#~ msgid "Office applications"
+#~ msgstr "অফিস অ্যাপ্লিকেশন"
+
+#~ msgid "Other Documentation"
+#~ msgstr "অন্যান্য নথিপত্র"
+
+#~ msgid "P2P"
+#~ msgstr "P2P"
+
+#~ msgid "PDA Communication"
+#~ msgstr "PDA যোগাযোগ"
+
+#~ msgid "Package Manager"
+#~ msgstr "প্যাকেজ পরিচালন ব্যবস্থা"
+
+#~ msgid "Parallel Computing"
+#~ msgstr "প্যারালেল কম্পিউটিং"
+
+#~ msgid "Photography"
+#~ msgstr "আলোকচিত্রবিদ্যা"
+
+#~ msgid "Physics"
+#~ msgstr "পদার্থবিদ্যা"
+
+#~ msgid "Players"
+#~ msgstr "প্লেয়ার"
+
+#~ msgid "Presentation Tools"
+#~ msgstr "উপস্থাপনা সংক্রান্ত সামগ্রী"
+
+#~ msgid "Printing"
+#~ msgstr "প্রিন্ট ব্যবস্থা"
+
+#~ msgid "Profiling Tools"
+#~ msgstr "প্রোফাইল নির্মাণে ব্যবহৃত সামগ্রী"
+
+#~ msgid "Project Management Tools"
+#~ msgstr "প্রজেক্ট পরিচালনার সামগ্রী"
+
+#~ msgid "Publishing"
+#~ msgstr "প্রকাশনা"
+
+#~ msgid "Qt"
+#~ msgstr "Qt"
+
+#~ msgid "Raster Graphics"
+#~ msgstr "র‍্যাস্টার গ্রাফিক্স"
+
+#~ msgid "Recorders"
+#~ msgstr "রেকর্ডার"
+
+#~ msgid "Remote Access"
+#~ msgstr "দূরবর্তী ব্যবহার"
+
+#~ msgid "Revision Control"
+#~ msgstr "পরিবর্ধন নিয়ন্ত্রণ"
+
+#~ msgid "Robotics"
+#~ msgstr "রোবোটিক্স"
+
+#~ msgid "Role Playing Games"
+#~ msgstr "ভূমিকার খেলা"
+
+#~ msgid "Scanning"
+#~ msgstr "স্ক্যান ব্যবস্থা"
+
+#~ msgid "Science"
+#~ msgstr "বিজ্ঞান"
+
+#~ msgid "Security"
+#~ msgstr "নিরাপত্তা"
+
+#~ msgid "Sequencers"
+#~ msgstr "সিকুয়েন্সার"
+
+#~ msgid ""
+#~ "Settings users can manipulate to make their environment more pleasant"
+#~ msgstr "ব্যবহারকারীরদের কর্ম পরিবেশের সৌন্দর্য্য পরিবর্তনের জন্য বিবিধ বৈশিষ্ট্য"
+
+#~ msgid "Simulation Games"
+#~ msgstr "সিমুলেশন খেলা"
+
+#~ msgid "Sound"
+#~ msgstr "শব্দ"
+
+#~ msgid "Sound &amp; Video"
+#~ msgstr "শব্দ &amp; ভিডিও"
+
+#~ msgid "Sound &amp; Video Editing"
+#~ msgstr "শব্দ &amp; ভিডিও সম্পাদনা"
+
+#~ msgid "Sports"
+#~ msgstr "ক্রিড়া"
+
+#~ msgid "Sports Games"
+#~ msgstr "ক্রিড়াসমৃদ্ধ খেলা"
+
+#~ msgid "Spreadsheet Tools"
+#~ msgstr "স্প্রেড-শিটের সরঞ্জাম"
+
+#~ msgid "Strategy Games"
+#~ msgstr "কৌশলের খেলা"
+
+#~ msgid "System"
+#~ msgstr "সিস্টেম"
+
+#~ msgid "TV"
+#~ msgstr "টেলিভিশন"
+
+#~ msgid "Telephony"
+#~ msgstr "টেলিফোনি"
+
+#~ msgid "Telephony Tools"
+#~ msgstr "টেলিফোনি সংক্রান্ত সামগ্রী"
+
+#~ msgid "Terminal Emulator"
+#~ msgstr "টার্মিন্যাল এমুলেটর"
+
+#~ msgid "Text Editors"
+#~ msgstr "টেক্সট এডিটর"
+
+#~ msgid "Text Tools"
+#~ msgstr "টেক্সট সংক্রান্ত সরঞ্জাম"
+
+#~ msgid "Tools to help you manage your computer"
+#~ msgstr "আপনার কম্পিউটার পরিচালনার জন্য বিভিন্ন সামগ্রী"
+
+#~ msgid "Translation Tools"
+#~ msgstr "অনুবাদের সামগ্রী"
+
+#~ msgid "Tuners"
+#~ msgstr "টিউনার"
+
+#~ msgid "Utilities"
+#~ msgstr "বিবিধ সামগ্রী"
+
+#~ msgid "Utilities to help you get work done"
+#~ msgstr "আপনার কর্ম সঞ্চালনের জন্য বিভিন্ন সামগ্রী"
+
+#~ msgid "Vector Graphics"
+#~ msgstr "ভেক্টর গ্রাফিক্স"
+
+#~ msgid "Video"
+#~ msgstr "ভিডিও"
+
+#~ msgid "Video Conference"
+#~ msgstr "ভিডিও কনফারেন্স"
+
+# msgstr "/_সহায়তা/_সম্বন্ধে"
+#~ msgid "Web Browser"
+#~ msgstr "ওয়েব ব্রাউজার"
+
+#~ msgid "Web Development"
+#~ msgstr "ওয়েব ডিভেলপমেন্ট"
+
+# msgstr "/_সহায়তা/_সম্বন্ধে"
+#~ msgid "Welcome to the GNOME Help Browser"
+#~ msgstr "GNOME সহায়িকা ব্রাউজারে আপনাকে স্বাগতম"
+
+#~ msgid "Word Processors"
+#~ msgstr "ওয়ার্ড প্রসেসর"
+
+#~ msgid "Re_name"
+#~ msgstr "নাম পরিবর্তন (_n)"
+
+#~ msgid "_Bookmarks:"
+#~ msgstr "বুকমার্ক:(_B)"
+
+#~ msgid "Add Bookmark"
+#~ msgstr "বুকমার্ক যোগ করুন"
+
+#~ msgid "_Title:"
+#~ msgstr "শিরোনাম: (_T)"
+
+#~ msgid "_Location:"
+#~ msgstr "অবস্থান:(_L)"
+
+#~ msgid "Fonts"
+#~ msgstr "ফন্ট"
+
+#~ msgid "Preferences"
+#~ msgstr "পছন্দ"
+
+#~ msgid "_Browse with caret"
+#~ msgstr "caret সহ ব্রাউজ করুন (_B)"
+
+#~ msgid "_Fixed width:"
+#~ msgstr "সনুর্দিষ্ট প্রস্থ:(_F)"
+
+#~ msgid "_Use system fonts"
+#~ msgstr "সিস্টেমের ফন্ট ব্যবহার করা হবে (_U)"
+
+#~ msgid "_Variable width:"
+#~ msgstr "পরিবর্তনযোগ্য প্রস্থ: (_V)"
+
+#~ msgid "Font for fixed text"
+#~ msgstr "সুনির্দিষ্ট টেক্সটে ব্যবহৃত ফন্ট"
+
+#~ msgid "Font for text"
+#~ msgstr "টেক্সটে ব্যবহৃত ফন্ট"
+
+#~ msgid "Font for text with fixed width."
+#~ msgstr "সুনির্দিষ্ট প্রস্থের টেক্সটে ব্যবহৃত ফন্ট।"
+
+#~ msgid "Font for text with variable width."
+#~ msgstr "পরিবর্তনযোগ্য প্রস্থের টেক্সটে ব্যবহৃত ফন্ট।"
+
+#~ msgid "Use a keyboard-controllable caret when viewing pages."
+#~ msgstr "পৃষ্ঠা প্রদর্শনের সময় কি-বোর্ড দ্বারা নিয়ন্ত্রিত ক্যারেট ব্যবহার করা হবে।"
+
+#~ msgid "Use caret"
+#~ msgstr "ক্যারেট ব্যবহার করা হবে"
+
+#~ msgid "Use system fonts"
+#~ msgstr "সিস্টেম ফন্ট ব্যবহার করা হবে"
+
+#~ msgid "Use the default fonts set for the system."
+#~ msgstr "সিস্টেমে নির্ধারিত ডিফল্ট ফন্ট সংকলন ব্যবহৃত হবে।"
+
+#~ msgid "File is not a valid .desktop file"
+#~ msgstr "এটি বৈধ .desktop ফাইল নয়"
+
+#~ msgid "Unrecognized desktop file Version '%s'"
+#~ msgstr "ডেস্কটপ ফাইলের অজ্ঞাত সংস্করণ '%s'"
+
+#~| msgid "Settings"
+#~ msgid "Starting %s"
+#~ msgstr "%s আরম্ভ করা হচ্ছে"
+
+#~ msgid "Application does not accept documents on command line"
+#~ msgstr "অ্যাপ্লিকেশন দ্বারা কমান্ড-লাইনের মাধ্যমে নথিপত্র গ্রহণ করা হয় না"
+
+#~ msgid "Unrecognized launch option: %d"
+#~ msgstr "প্রারম্ভিক বিকল্প অজানা: %d"
+
+#~ msgid "Can't pass document URIs to a 'Type=Link' desktop entry"
+#~ msgstr "'Type=Link' ডেস্কটপ এনট্রির ক্ষেত্রে নথিপত্রের URI উল্লেখ করা সম্ভব নয়"
+
+#~ msgid "Not a launchable item"
+#~ msgstr "প্রারম্ভ করার যোগ্য বস্তু নয়"
+
+#~ msgid "Disable connection to session manager"
+#~ msgstr "সেশান পরিচালনব্যবস্থার সাথে সংযোগ বিচ্ছিন্ন করা হবে"
+
+#~ msgid "Specify file containing saved configuration"
+#~ msgstr "সংরক্ষিত কনফিগারেশন ধারণকারী ফাইল উল্লেখ করুন"
+
+#~ msgid "FILE"
+#~ msgstr "FILE"
+
+#~ msgid "Specify session management ID"
+#~ msgstr "সেশান পরিচালনার ID উল্লেখ করুন"
+
+#~| msgid "IDEs"
+#~ msgid "ID"
+#~ msgstr "ID"
+
+#~ msgid "Session management options:"
+#~ msgstr "সেশান পরিচালনা সংক্রান্ত বিকল্প:"
+
+#~ msgid "Show session management options"
+#~ msgstr "সেশান পরিচালনা সংক্রান্ত বিকল্প প্রদর্শন করা হবে"
+
+#~ msgid "Open Bookmark in New Window"
+#~ msgstr "নতুন উইন্ডোর মধ্যে বুকমার্ক খোলা হবে"
+
+#~ msgid "Rename Bookmark"
+#~ msgstr "বুকমার্কের নাম পরিবর্তন করুন"
+
+#~ msgid "A bookmark titled %s already exists for this page."
+#~ msgstr "এই পৃষ্ঠার জন্য %s শিরোনামসহ একটি বুকমার্ক বর্তমানে উপস্থিত রয়েছে।"
+
+#~ msgid "A bookmark titled <b>%s</b> already exists for this page."
+#~ msgstr "এই পৃষ্ঠার জন্য <b>%s</b> শিরোনামসহ একটি বুকমার্ক বর্তমানে উপস্থিত রয়েছে।"
+
+# msgstr "/_সহায়তা/_সম্বন্ধে"
+#~ msgid "Help Topics"
+#~ msgstr "সহায়িকার সূচিপত্র"
+
+#~ msgid "File not found"
+#~ msgstr "ফাইল পাওয়া যায়নি"
+
+# msgstr "Yelp কে চালু করা যায়নিঃ '%s'"
+# msgstr "Yelp কে স্বয়ংক্রিয় করতে পারছে নাঃ '%s'"
+#~ msgid "Could not parse file"
+#~ msgstr "ফাইল পার্স করতে ব্যর্থ"
+
+#~ msgid "Could Not Read File"
+#~ msgstr "ফাইল পড়তে ব্যর্থ"
+
+#~ msgid "No information is available about this error."
+#~ msgstr "এই ত্রুটি সম্পর্কে কোনো তথ্য উপস্থিত নেই।"
+
+#~ msgid ""
+#~ "The file ‘%s’ could not be read and decoded. The file may be compressed "
+#~ "in an unsupported format."
+#~ msgstr ""
+#~ "‘%s’ ফাইলটি পড়া ও ডি-কোড করতে ব্যর্থ। সম্ভবত ফাইলটি কোনো অসমর্থিত বিন্যাসে "
+#~ "কমপ্রেস করা হয়েছে।"
+
+#~ msgid "Use a private session"
+#~ msgstr "ব্যক্তিগত সেশান ব্যবহার করা হবে"
+
+#~ msgid "Define which cache directory to use"
+#~ msgstr "ব্যবহারের উদ্দেশ্যে ক্যাশে ডিরেক্টরি নির্ধারণ করুন"
+
+# msgstr "/_সহায়তা/_সম্বন্ধে"
+#~ msgid " GNOME Help Browser"
+#~ msgstr " GNOME Help Browser"
+
+#~| msgid "File not found"
+#~ msgid "Directory not found"
+#~ msgstr "ডিরেক্টরি পাওয়া যায়নি"
+
+#~ msgid ""
+#~ "The file ‘%s’ could not be parsed because it is not a well-formed man "
+#~ "page."
+#~ msgstr "সঠিক man ডকুমেন্ট রূপে গঠিত না হওয়ার ফলে ‘%s’ ফাইল পার্স করতে ব্যর্থ।"
+
+#~ msgid "Preparing to print"
+#~ msgstr "প্রিন্ট কর্মের প্রস্তুতি"
+
+#~ msgid "Printing is not supported on this printer"
+#~ msgstr "এই প্রিন্টারে প্রিন্ট কর্ম সমর্থিত হয় না"
+
+#~ msgid "Printer %s does not support postscript printing."
+#~ msgstr "%s প্রিন্টারে postscript প্রিন্ট কর্ম সমর্থিত হয় না।"
+
+#~ msgid "Waiting to print"
+#~ msgstr "প্রিন্ট কর্মের উদ্দেশ্যে অপেক্ষারত"
+
+#~ msgid "An error occurred while printing"
+#~ msgstr "প্রিন্ট করার সময় সমস্যা দেখা দিয়েছে"
+
+#~ msgid "It was not possible to print your document: %s"
+#~ msgstr "আপনার ডকুমেন্ট প্রিন্ট করা যায়নি: %s"
+
+#~ msgid "the GNOME Support Forums"
+#~ msgstr "GNOME'র সহায়তার ফোরাম"
+
+#~ msgid "No results for \"%s\""
+#~ msgstr "\"%s\"-র কোনো ফলাফল পাওয়া যায়নি"
+
+#~ msgid ""
+#~ "Try using different words to describe the problem you're having or the "
+#~ "topic you want help with."
+#~ msgstr ""
+#~ "আপনার সমস্যার অথবা অনুসন্ধানের বিষয়বস্তুর বর্নণা করার জন্য বিভিন্ন শব্দ উল্লেখ করুন।"
+
+#~ msgid ""
+#~ "a:about:an:are:as:at:be:broke:broken:by:can:can't:dialog:dialogue:do:"
+#~ "doesn't:doesnt:don't:dont:explain:for:from:get:gets:got:make:makes:not:"
+#~ "when:has:have:help:how:i:in:is:it:item:me:my:of:on:or:tell:that:the:thing:"
+#~ "this:to:what:where:who:will:with:won't:wont:why:work:working:works"
+#~ msgstr ""
+#~ "a:about:an:are:as:at:be:broke:broken:by:can:can't:dialog:dialogue:do:"
+#~ "doesn't:doesnt:don't:dont:explain:for:from:get:gets:got:make:makes:not:"
+#~ "when:has:have:help:how:i:in:is:it:item:me:my:of:on:or:tell:that:the:thing:"
+#~ "this:to:what:where:who:will:with:won't:wont:why:work:working:works"
+
+#~ msgid "re"
+#~ msgstr "NULL"
+
+#~ msgid "ers:er:ing:es:s:'s"
+#~ msgstr "NULL"
+
+#~ msgid "No Comment"
+#~ msgstr "মন্তব্য বিহীন"
+
+#~ msgid "Search could not be processed"
+#~ msgstr "অনুসন্ধান কর্ম সঞ্চালনে ব্যর্থ"
+
+#~ msgid "The requested search could not be processed."
+#~ msgstr "অনুরোধ করা অনুসন্ধান সঞ্চালন করতে ব্যর্থ।"
+
+#~ msgid "Cannot process the search"
+#~ msgstr "অনুসন্ধান সঞ্চালন করতে ব্যর্থ"
+
+#~ msgid "The search processor returned invalid results"
+#~ msgstr "অনুসন্ধান প্রক্রিয়া থেকে অবৈধ ফলাফল প্রাপ্ত হয়েছে"
+
+#~ msgid "The page %s was not found in the TOC."
+#~ msgstr "সূচিপত্রের মধ্যে %s পাওয়া যায়নি।"
+
+#~ msgid "The requested page was not found in the TOC."
+#~ msgstr "অনুরোধ করার পৃষ্ঠাটি সূচিপত্রের মধ্যে পাওয়া যায়নি।"
+
+#~ msgid ""
+#~ "The TOC file could not be parsed because it is not a well-formed XML "
+#~ "document."
+#~ msgstr ""
+#~ "সঠিক XML ডকুমেন্ট রূপে গঠিত না হওয়ার ফলে সূচিপত্রের ফাইলটি পার্স করতে ব্যর্থ।"
+
+#~ msgid "Broken Transformation"
+#~ msgstr "রূপান্তর ক্ষতিগ্রস্ত"
+
+#~ msgid ""
+#~ "An unknown error occurred while attempting to transform the document."
+#~ msgstr "ডকুমেন্ট রূপান্তর করার প্রচেষ্টাকালে অজানা ত্রুটি উৎপন্ন হয়েছে।"
+
+#~ msgid "_File"
+#~ msgstr "ফাইল (_F)"
+
+# msgstr "/ফাইল/_বন্ধ উইন্ডো"
+#~ msgid "_Edit"
+#~ msgstr "সম্পাদনা (_E)"
+
+# msgstr "/যাও/_সূচি"
+#~ msgid "_Help"
+#~ msgstr "সাহায্য (_H)"
+
+#~ msgid "Print This Document ..."
+#~ msgstr "এই ডকুমেন্টটি প্রিন্ট করুন..."
+
+#~ msgid "Open _Location"
+#~ msgstr "অবস্থান খুলুন (_L)"
+
+#~ msgid "_Close Window"
+#~ msgstr "উইন্ডো বন্ধ করুন (_C)"
+
+#~ msgid "_Select All"
+#~ msgstr "সমগ্র নির্বাচন করুন (_S)"
+
+#~ msgid "_Find..."
+#~ msgstr "অনুসন্ধান করুন...(_F)"
+
+# msgstr "_পরেরটা"
+#~ msgid "Find Pre_vious"
+#~ msgstr "পূর্ববর্তী উপস্থিতি অনুসন্ধান করুন (_v)"
+
+#~ msgid "Find previous occurrence of the word or phrase"
+#~ msgstr "শব্দ অথবা পংক্তির পূর্ববর্তী উপস্থিতি অনুসন্ধান করুন"
+
+# msgstr "স্বয়ংক্রিয়ভাবে _চারদিক থেকে জড়িয়ে ফেলে"
+#~ msgid "Find Ne_xt"
+#~ msgstr "পরবর্তী উপস্থিতি অনুসন্ধান করুন (_x)"
+
+#~ msgid "Find next occurrence of the word or phrase"
+#~ msgstr "শব্দ অথবা পংক্তির পরবর্তী উপস্থিতি অনুসন্ধান করুন"
+
+#~ msgid "_Preferences"
+#~ msgstr "পছন্দসই বৈশিষ্ট্য (_P)"
+
+#~ msgid "_Reload"
+#~ msgstr "নতুন করে প্রদর্শন (_R)"
+
+#~ msgid "Show previous page in history"
+#~ msgstr "পূর্ববর্তী তথ্যে চিহ্নিত পুরোনো পৃষ্ঠা দেখুন"
+
+#~ msgid "Show next page in history"
+#~ msgstr "পূর্ববর্তী তথ্যে চিহ্নিত পরবর্তী পৃষ্ঠা দেখুন"
+
+#~ msgid "_Help Topics"
+#~ msgstr "সহায়িকার সুচি (_H)"
+
+#~ msgid "Go to the listing of help topics"
+#~ msgstr "সহায়িকার বিষয়বস্তুর তালিকা দেখুন"
+
+# msgstr "_অনুসন্ধান হচ্ছেঃ "
+#~ msgid "_Contents"
+#~ msgstr "সূচিপত্র (_C)"
+
+#~ msgid "_Edit Bookmarks..."
+#~ msgstr "বুকমার্ক সম্পাদনা... (_E)"
+
+#~ msgid "_Copy Link Address"
+#~ msgstr "লিঙ্ক দ্বারা চিহ্নিত অবস্থান কপি করুন (_C)"
+
+#~ msgid "Help On this application"
+#~ msgstr "এই অ্যাপ্লিকেশন সংক্রান্ত সহায়তা"
+
+# msgstr "/_সহায়তা"
+#~ msgid "_About"
+#~ msgstr "পরিচিতি (_A)"
+
+#~ msgid "Copy _Email Address"
+#~ msgstr "ই-মেইল ঠিকানা কপি করুন (_E)"
+
+# msgstr "/_সহায়তা/_সম্বন্ধে"
+#~ msgid "Help Browser"
+#~ msgstr "সহায়ক তথ্য প্রদর্শনকারী ব্রাউজার"
+
+# msgstr "ম্যানুয়াল পেজ"
+#~ msgid "Unknown Page"
+#~ msgstr "অজানা পৃষ্ঠা"
+
+#~ msgid "The requested URI \"%s\" is invalid"
+#~ msgstr "অনুরোধ করা URI \"%s\" বৈধ নয়"
+
+#~ msgid "Unable to load page"
+#~ msgstr "পৃষ্ঠা লোড করতে ব্যর্থ"
+
+#~ msgid "Cannot create search component"
+#~ msgstr "অনুসন্ধানের সামগ্রী নির্মাণ করতে ব্যর্থ"
+
+# msgstr "_পরেরটা"
+#~ msgid "Find _Previous"
+#~ msgstr "পরবর্তী উপস্থিতি অনুসন্ধান করুন (_P)"
+
+# msgstr "স্বয়ংক্রিয়ভাবে _চারদিক থেকে জড়িয়ে ফেলে"
+#~ msgid "Find _Next"
+#~ msgstr "পরবর্তী উপস্থিতি অনুসন্ধান করুন (_N)"
+
+#~ msgid "Phrase not found"
+#~ msgstr "পংক্তির পাওয়া যায়নি"
+
+#~ msgid ""
+#~ "The file ‘%s’ could not be read.  This file might be missing, or you "
+#~ "might not have permissions to read it."
+#~ msgstr ""
+#~ "‘%s’ ফাইল পড়তে ব্যর্থ।  ফাইলটি সম্ভবত অনুপস্থিত অথবা এটি পড়ার জন্য প্রয়োজনীয় "
+#~ "অনুমতি আপনার নেই।"
+
+#~ msgid "translator-credits"
+#~ msgstr ""
+#~ "খন্দকার মুজাহিদুল ইসলাম সুজন <suzan@bengalinux.org>\n"
+#~ "রুণা ভট্টাচার্য <runabh@gmail.com>\n"
+#~ "অঙ্কুর গ্রুপের পক্ষ থেকে"
+
+#~ msgid "A documentation browser and viewer for the Gnome Desktop."
+#~ msgstr "Gnome ডেস্কটপে ব্যবহারযোগ্য একটু ডকুমেন্টেশন ব্রাউজার ও প্রদর্শন ব্যবস্থা।"

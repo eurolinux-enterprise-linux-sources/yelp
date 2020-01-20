@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -40,11 +42,11 @@ yelp_storage_set_default (YelpStorage *storage)
 YelpStorage *
 yelp_storage_get_default (void)
 {
-    static GMutex mutex;
-    g_mutex_lock (&mutex);
+    static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
+    g_static_mutex_lock (&mutex);
     if (default_storage == NULL)
         default_storage = yelp_sqlite_storage_new (":memory:");
-    g_mutex_unlock (&mutex);
+    g_static_mutex_unlock (&mutex);
     return default_storage;
 }
 

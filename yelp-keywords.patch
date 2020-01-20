@@ -1,0 +1,12 @@
+diff -up yelp-3.8.1/po/ml.po.keywords yelp-3.8.1/po/ml.po
+--- yelp-3.8.1/po/ml.po.keywords	2013-05-14 00:32:15.995943682 -0400
++++ yelp-3.8.1/po/ml.po	2013-05-14 00:32:58.319944317 -0400
+@@ -561,7 +561,7 @@ msgstr "ഗ്നോം സഹായം
+ 
+ #: ../yelp.desktop.in.in.h:3
+ msgid "documentation;information;manual;"
+-msgstr "പ്രമാണശേഖരണം;വിവരം;ഉപയോഗസഹായി"
++msgstr "പ്രമാണശേഖരണം;വിവരം;ഉപയോഗസഹായി;"
+ 
+ #~ msgid "GNU Info Pages"
+ #~ msgstr "GNU വിവര പേജുകള്‍"

@@ -14,7 +14,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Don Scorgie <dscorgie@svn.gnome.org>
  */
@@ -46,9 +48,10 @@ typedef enum {
 
 typedef struct _YelpInfoDocumentPrivate  YelpInfoDocumentPrivate;
 struct _YelpInfoDocumentPrivate {
+    YelpUri       *uri;
     InfoState    state;
 
-    GMutex      mutex;
+    GMutex     *mutex;
     GThread    *thread;
 
     xmlDocPtr   xmldoc;
@@ -67,6 +70,8 @@ struct _YelpInfoDocumentPrivate {
 };
 
 
+static void           yelp_info_document_class_init       (YelpInfoDocumentClass  *klass);
+static void           yelp_info_document_init             (YelpInfoDocument       *info);
 static void           yelp_info_document_dispose          (GObject                *object);
 static void           yelp_info_document_finalize         (GObject                *object);
 
@@ -75,8 +80,7 @@ static gboolean       info_request_page                   (YelpDocument         
                                                            const gchar          *page_id,
                                                            GCancellable         *cancellable,
                                                            YelpDocumentCallback  callback,
-                                                           gpointer              user_data,
-                                                           GDestroyNotify        notify);
+                                                           gpointer              user_data);
 
 /* YelpTransform */
 static void           transform_chunk_ready     (YelpTransform        *transform,
@@ -97,7 +101,7 @@ static gboolean       info_sections_visit       (GtkTreeModel         *model,
 static void           info_document_disconnect  (YelpInfoDocument     *info);
 
 
-G_DEFINE_TYPE (YelpInfoDocument, yelp_info_document, YELP_TYPE_DOCUMENT)
+G_DEFINE_TYPE (YelpInfoDocument, yelp_info_document, YELP_TYPE_DOCUMENT);
 #define GET_PRIV(object) (G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_INFO_DOCUMENT, YelpInfoDocumentPrivate))
 
 static void
@@ -121,13 +125,18 @@ yelp_info_document_init (YelpInfoDocument *info)
 
     priv->state = INFO_STATE_BLANK;
     priv->xmldoc = NULL;
-    g_mutex_init (&priv->mutex);
+    priv->mutex = g_mutex_new ();
 }
 
 static void
 yelp_info_document_dispose (GObject *object)
 {
     YelpInfoDocumentPrivate *priv = GET_PRIV (object);
+
+    if (priv->uri) {
+        g_object_unref (priv->uri);
+        priv->uri = NULL;
+    }
 
     if (priv->sections) {
         g_object_unref (priv->sections);
@@ -153,7 +162,7 @@ yelp_info_document_finalize (GObject *object)
     g_free (priv->root_id);
     g_free (priv->visit_prev_id);
 
-    g_mutex_clear (&priv->mutex);
+    g_mutex_free (priv->mutex);
 
     G_OBJECT_CLASS (yelp_info_document_parent_class)->finalize (object);
 }
@@ -163,11 +172,22 @@ yelp_info_document_finalize (GObject *object)
 YelpDocument *
 yelp_info_document_new (YelpUri *uri)
 {
+    YelpInfoDocument *info;
+    YelpInfoDocumentPrivate *priv;
+    gchar *doc_uri;
+
     g_return_val_if_fail (uri != NULL, NULL);
 
-    return (YelpDocument *) g_object_new (YELP_TYPE_INFO_DOCUMENT,
-                                          "document-uri", uri,
-                                          NULL);
+    doc_uri = yelp_uri_get_document_uri (uri);
+    info = (YelpInfoDocument *) g_object_new (YELP_TYPE_INFO_DOCUMENT,
+                                              "document-uri", doc_uri,
+                                              NULL);
+    g_free (doc_uri);
+    priv = GET_PRIV (info);
+
+    priv->uri = g_object_ref (uri);
+
+    return (YelpDocument *) info;
 }
 
 
@@ -179,8 +199,7 @@ info_request_page (YelpDocument         *document,
                    const gchar          *page_id,
                    GCancellable         *cancellable,
                    YelpDocumentCallback  callback,
-                   gpointer              user_data,
-                   GDestroyNotify        notify)
+                   gpointer              user_data)
 {
     YelpInfoDocumentPrivate *priv = GET_PRIV (document);
     gchar *docuri;
@@ -195,28 +214,26 @@ info_request_page (YelpDocument         *document,
                                                                              page_id,
                                                                              cancellable,
                                                                              callback,
-                                                                             user_data,
-                                                                             notify);
+                                                                             user_data);
     if (handled) {
         return TRUE;
     }
 
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
 
     switch (priv->state) {
     case INFO_STATE_BLANK:
 	priv->state = INFO_STATE_PARSING;
 	priv->process_running = TRUE;
         g_object_ref (document);
-	priv->thread = g_thread_new ("info-page",
-                                     (GThreadFunc) info_document_process,
-                                     document);
+	priv->thread = g_thread_create ((GThreadFunc) info_document_process,
+                                        document, FALSE, NULL);
 	break;
     case INFO_STATE_PARSING:
 	break;
     case INFO_STATE_PARSED:
     case INFO_STATE_STOP:
-        docuri = yelp_uri_get_document_uri (yelp_document_get_uri (document));
+        docuri = yelp_uri_get_document_uri (priv->uri);
         error = g_error_new (YELP_ERROR, YELP_ERROR_NOT_FOUND,
                              _("The page ‘%s’ was not found in the document ‘%s’."),
                              page_id, docuri);
@@ -226,12 +243,9 @@ info_request_page (YelpDocument         *document,
                               error);
         g_error_free (error);
         break;
-    default:
-        g_assert_not_reached ();
-        break;
     }
 
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
     return TRUE;
 }
 
@@ -296,7 +310,7 @@ transform_finished (YelpTransform    *transform,
                        (GWeakNotify) transform_finalized,
                        info);
 
-    docuri = yelp_uri_get_document_uri (yelp_document_get_uri ((YelpDocument *) info));
+    docuri = yelp_uri_get_document_uri (priv->uri);
     error = g_error_new (YELP_ERROR, YELP_ERROR_NOT_FOUND,
                          _("The requested page was not found in the document ‘%s’."),
                          docuri);
@@ -352,7 +366,7 @@ info_document_process (YelpInfoDocument *info)
     gint  params_i = 0;
     gchar **params = NULL;
 
-    file = yelp_uri_get_file (yelp_document_get_uri ((YelpDocument *) info));
+    file = yelp_uri_get_file (priv->uri);
     if (file == NULL) {
         error = g_error_new (YELP_ERROR, YELP_ERROR_NOT_FOUND,
                              _("The file does not exist."));
@@ -387,9 +401,9 @@ info_document_process (YelpInfoDocument *info)
         goto done;
     }
 
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
     if (priv->state == INFO_STATE_STOP) {
-	g_mutex_unlock (&priv->mutex);
+	g_mutex_unlock (priv->mutex);
 	goto done;
     }
 
@@ -415,7 +429,7 @@ info_document_process (YelpInfoDocument *info)
                           NULL,
 			  (const gchar * const *) params);
     g_strfreev (params);
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
 
  done:
     g_free (filepath);

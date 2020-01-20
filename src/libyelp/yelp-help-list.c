@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance  <shaunm@gnome.org>
  */
@@ -29,13 +31,14 @@
 #include <libxml/parser.h>
 #include <libxml/xinclude.h>
 #include <libxml/xpath.h>
-#include <libxml/xpathInternals.h>
 
 #include "yelp-help-list.h"
 #include "yelp-settings.h"
 
 typedef struct _HelpListEntry HelpListEntry;
 
+static void           yelp_help_list_class_init      (YelpHelpListClass     *klass);
+static void           yelp_help_list_init            (YelpHelpList          *list);
 static void           yelp_help_list_dispose         (GObject               *object);
 static void           yelp_help_list_finalize        (GObject               *object);
 
@@ -43,8 +46,7 @@ static gboolean       help_list_request_page         (YelpDocument          *doc
                                                       const gchar           *page_id,
                                                       GCancellable          *cancellable,
                                                       YelpDocumentCallback   callback,
-                                                      gpointer               user_data,
-                                                      GDestroyNotify         notify);
+                                                      gpointer               user_data);
 static void           help_list_think                (YelpHelpList          *list);
 static void           help_list_handle_page          (YelpHelpList          *list,
                                                       const gchar           *page_id);
@@ -85,12 +87,12 @@ help_list_entry_cmp (HelpListEntry *a, HelpListEntry *b)
     return g_utf8_collate (as, bs);
 }
 
-G_DEFINE_TYPE (YelpHelpList, yelp_help_list, YELP_TYPE_DOCUMENT)
+G_DEFINE_TYPE (YelpHelpList, yelp_help_list, YELP_TYPE_DOCUMENT);
 #define GET_PRIV(object) (G_TYPE_INSTANCE_GET_PRIVATE ((object), YELP_TYPE_HELP_LIST, YelpHelpListPrivate))
 
 typedef struct _YelpHelpListPrivate  YelpHelpListPrivate;
 struct _YelpHelpListPrivate {
-    GMutex         mutex;
+    GMutex        *mutex;
     GThread       *thread;
 
     gboolean process_running;
@@ -124,20 +126,20 @@ yelp_help_list_init (YelpHelpList *list)
 {
     YelpHelpListPrivate *priv = GET_PRIV (list);
 
-    g_mutex_init (&priv->mutex);
+    priv->mutex = g_mutex_new ();
     priv->entries = g_hash_table_new_full (g_str_hash, g_str_equal,
                                            g_free,
                                            (GDestroyNotify) help_list_entry_free);
 
-    priv->get_docbook_title = xmlXPathCompile (BAD_CAST "normalize-space("
+    priv->get_docbook_title = xmlXPathCompile ("normalize-space("
                                                "( /*/title | /*/db:title"
                                                "| /*/articleinfo/title"
                                                "| /*/bookinfo/title"
                                                "| /*/db:info/db:title"
                                                ")[1])");
-    priv->get_mallard_title = xmlXPathCompile (BAD_CAST "normalize-space((/mal:page/mal:info/mal:title[@type='text'] |"
+    priv->get_mallard_title = xmlXPathCompile ("normalize-space((/mal:page/mal:info/mal:title[@type='text'] |"
                                                "                 /mal:page/mal:title)[1])");
-    priv->get_mallard_desc = xmlXPathCompile (BAD_CAST "normalize-space(/mal:page/mal:info/mal:desc[1])");
+    priv->get_mallard_desc = xmlXPathCompile ("normalize-space(/mal:page/mal:info/mal:desc[1])");
 
     yelp_document_set_page_id ((YelpDocument *) list, NULL, "index");
     yelp_document_set_page_id ((YelpDocument *) list, "index", "index");
@@ -155,7 +157,7 @@ yelp_help_list_finalize (GObject *object)
     YelpHelpListPrivate *priv = GET_PRIV (object);
 
     g_hash_table_destroy (priv->entries);
-    g_mutex_clear (&priv->mutex);
+    g_mutex_free (priv->mutex);
 
     if (priv->get_docbook_title)
         xmlXPathFreeCompExpr (priv->get_docbook_title);
@@ -180,8 +182,7 @@ help_list_request_page (YelpDocument          *document,
                         const gchar           *page_id,
                         GCancellable          *cancellable,
                         YelpDocumentCallback   callback,
-                        gpointer               user_data,
-                        GDestroyNotify         notify)
+                        gpointer               user_data)
 {
     gboolean handled;
     YelpHelpListPrivate *priv = GET_PRIV (document);
@@ -194,13 +195,12 @@ help_list_request_page (YelpDocument          *document,
                                                                          page_id,
                                                                          cancellable,
                                                                          callback,
-                                                                         user_data,
-                                                                         notify);
+                                                                         user_data);
     if (handled) {
         return TRUE;
     }
 
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
     if (priv->process_ran) {
         help_list_handle_page ((YelpHelpList *) document, page_id);
         return TRUE;
@@ -209,12 +209,11 @@ help_list_request_page (YelpDocument          *document,
     if (!priv->process_running) {
         priv->process_running = TRUE;
         g_object_ref (document);
-        priv->thread = g_thread_new ("helplist-page",
-                                     (GThreadFunc) help_list_think,
-                                     document);
+        priv->thread = g_thread_create ((GThreadFunc) help_list_think,
+                                        document, FALSE, NULL);
     }
     priv->pending = g_slist_prepend (priv->pending, g_strdup (page_id));
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
     return TRUE;
 }
 
@@ -226,7 +225,7 @@ help_list_think (YelpHelpList *list)
     YelpHelpListPrivate *priv = GET_PRIV (list);
     /* The strings are still owned by GLib; we just own the array. */
     gchar **datadirs;
-    gint datadir_i, lang_i;
+    gint datadir_i, subdir_i, lang_i;
     GList *cur;
     GtkIconTheme *theme;
 
@@ -249,7 +248,7 @@ help_list_think (YelpHelpList *list)
             g_free (helpdirname);
             continue;
         }
-        while ((child = g_file_enumerator_next_file (children, NULL, NULL))) {
+        while (child = g_file_enumerator_next_file (children, NULL, NULL)) {
             gchar *docid;
             HelpListEntry *entry = NULL;
 
@@ -326,7 +325,7 @@ help_list_think (YelpHelpList *list)
                 g_free (langdirname);
                 continue;
             }
-            while ((child = g_file_enumerator_next_file (children, NULL, NULL))) {
+            while (child = g_file_enumerator_next_file (children, NULL, NULL)) {
                 gchar *docid, *filename;
                 HelpListEntry *entry = NULL;
                 if (g_file_info_get_file_type (child) != G_FILE_TYPE_DIRECTORY) {
@@ -349,6 +348,7 @@ help_list_think (YelpHelpList *list)
                     entry->id = docid;
                     entry->filename = filename;
                     entry->type = YELP_URI_DOCUMENT_TYPE_MALLARD;
+                    g_object_unref (child);
                     goto found;
                 }
                 g_free (filename);
@@ -362,6 +362,7 @@ help_list_think (YelpHelpList *list)
                     entry->id = docid;
                     entry->filename = filename;
                     entry->type = YELP_URI_DOCUMENT_TYPE_DOCBOOK;
+                    g_object_unref (child);
                     goto found;
                 }
                 g_free (filename);
@@ -417,14 +418,14 @@ help_list_think (YelpHelpList *list)
                     const gchar *iconfile = gtk_icon_info_get_filename (info);
                     if (iconfile)
                         entry->icon = g_filename_to_uri (iconfile, NULL, NULL);
-                    g_object_unref (info);
+                    gtk_icon_info_free (info);
                 }
             }
             g_object_unref (app);
         }
     }
 
-    g_mutex_lock (&priv->mutex);
+    g_mutex_lock (priv->mutex);
     priv->process_running = FALSE;
     priv->process_ran = TRUE;
     while (priv->pending) {
@@ -433,7 +434,7 @@ help_list_think (YelpHelpList *list)
         g_free (page_id);
         priv->pending = g_slist_delete_link (priv->pending, priv->pending);
     }
-    g_mutex_unlock (&priv->mutex);
+    g_mutex_unlock (priv->mutex);
 
     g_object_unref (list);
 }
@@ -448,7 +449,7 @@ help_list_handle_page (YelpHelpList *list,
     YelpHelpListPrivate *priv = GET_PRIV (list);
     GtkTextDirection direction = gtk_widget_get_default_direction ();
     GString *string = g_string_new
-        ("<html xmlns=\"http://www.w3.org/1999/xhtml\"><head><style type='text/css'>\n"
+        ("<html><head><style type='text/css'>\n"
          "html { height: 100%; }\n"
          "body { margin: 0; padding: 0; max-width: 100%;");
     colors = yelp_settings_get_colors (yelp_settings_get_default ());
@@ -563,7 +564,7 @@ help_list_handle_page (YelpHelpList *list,
     for (cur = priv->all_entries; cur != NULL; cur = cur->next) {
         HelpListEntry *entry = (HelpListEntry *) cur->data;
         gchar *title = entry->title ? entry->title : (strchr (entry->id, ':') + 1);
-        const gchar *desc = entry->desc ? entry->desc : "";
+        gchar *desc = entry->desc ? entry->desc : "";
 
         tmp = g_markup_printf_escaped ("<a href='%s'><div class='linkdiv'>",
                                        entry->id);
@@ -594,7 +595,7 @@ help_list_handle_page (YelpHelpList *list,
 
     yelp_document_give_contents (YELP_DOCUMENT (list), page_id,
                                  string->str,
-                                 "application/xhtml+xml");
+                                 "text/html");
     g_strfreev (colors);
     g_string_free (string, FALSE);
     yelp_document_signal (YELP_DOCUMENT (list), page_id,
@@ -631,7 +632,7 @@ help_list_process_docbook (YelpHelpList  *list,
     obj = xmlXPathCompiledEval (priv->get_docbook_title, xpath);
     if (obj) {
         if (obj->stringval)
-            entry->title = g_strdup ((const gchar *) obj->stringval);
+            entry->title = g_strdup (obj->stringval);
         xmlXPathFreeObject (obj);
     }
 
@@ -671,14 +672,14 @@ help_list_process_mallard (YelpHelpList  *list,
     obj = xmlXPathCompiledEval (priv->get_mallard_title, xpath);
     if (obj) {
         if (obj->stringval)
-            entry->title = g_strdup ((const gchar *) obj->stringval);
+            entry->title = g_strdup (obj->stringval);
         xmlXPathFreeObject (obj);
     }
 
     obj = xmlXPathCompiledEval (priv->get_mallard_desc, xpath);
     if (obj) {
         if (obj->stringval)
-            entry->desc = g_strdup ((const gchar *) obj->stringval);
+            entry->desc = g_strdup (obj->stringval);
         xmlXPathFreeObject (obj);
     }
 

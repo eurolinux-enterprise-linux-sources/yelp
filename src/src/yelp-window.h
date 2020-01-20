@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance  <shaunm@gnome.org>
  */
@@ -36,12 +38,12 @@ typedef struct _YelpWindowClass  YelpWindowClass;
 
 struct _YelpWindow
 {
-    GtkApplicationWindow       parent;
+    GtkWindow       parent;
 };
 
 struct _YelpWindowClass
 {
-    GtkApplicationWindowClass  parent_class;
+    GtkWindowClass  parent_class;
 };
 
 GType             yelp_window_get_type     (void);

@@ -1,36 +1,43 @@
 %global _changelog_trimtime %(date +%s -d "1 year ago")
 
-Name:          yelp
-Epoch:         2
-Version:       3.28.1
-Release:       1%{?dist}
-Summary:       Help browser for the GNOME desktop
+Summary: Help browser for the GNOME desktop
+Name: yelp
+Epoch: 1
+Version: 3.8.1
+Release: 5%{?dist}
+#VCS: git:git://git.gnome.org/yelp
+Source: http://download.gnome.org/sources/yelp/3.8/%{name}-%{version}.tar.xz
 
-Group:         Applications/System
-License:       GPLv2+
-URL:           https://wiki.gnome.org/Apps/Yelp
-#VCS:          git:git://git.gnome.org/yelp
-Source:        https://download.gnome.org/sources/%{name}/3.28/%{name}-%{version}.tar.xz
-
+# https://bugzilla.gnome.org/show_bug.cgi?id=687957
+Patch0: 0001-Don-t-steal-focus-optionally.patch
 # https://bugzilla.gnome.org/show_bug.cgi?id=687960
-Patch1:        0001-Center-new-windows.patch
+Patch1: 0001-Center-new-windows.patch
+Patch2: yelp-keywords.patch
 
-BuildRequires: pkgconfig(gtk+-3.0)
-BuildRequires: pkgconfig(liblzma)
-BuildRequires: pkgconfig(libxml-2.0)
-BuildRequires: pkgconfig(libexslt)
-BuildRequires: pkgconfig(libxslt)
-BuildRequires: pkgconfig(sqlite3)
-BuildRequires: pkgconfig(webkit2gtk-4.0)
-BuildRequires: pkgconfig(yelp-xsl)
+URL: http://live.gnome.org/Yelp
+License: GPLv2+
+Group: Applications/System
+Requires: gnome-user-docs
+Requires: yelp-libs%{?_isa} = %{epoch}:%{version}-%{release}
+Requires: yelp-xsl
+
+Requires(post):   desktop-file-utils
+Requires(postun): desktop-file-utils
+
+BuildRequires: gtk3-devel >= 3.0.0
+BuildRequires: libxml2-devel >= 2.6.5
+BuildRequires: libxslt-devel >= 1.1.4
+BuildRequires: webkitgtk3-devel
 BuildRequires: desktop-file-utils
+BuildRequires: yelp-xsl-devel >= 3.0.1
+BuildRequires: xz-devel
 BuildRequires: bzip2-devel
 BuildRequires: gettext-devel
 BuildRequires: intltool
+BuildRequires: sqlite-devel
+BuildRequires: folks-devel
+BuildRequires: libgee-devel
 BuildRequires: itstool
-Requires:      yelp-libs%{?_isa} = %{epoch}:%{version}-%{release}
-Requires:      yelp-xsl
-
 
 %description
 Yelp is the help browser for the GNOME desktop. It is designed
@@ -57,7 +64,9 @@ the libraries in the yelp-libs package.
 
 %prep
 %setup -q
+%patch0 -p1
 %patch1 -p1
+%patch2 -p1
 
 %build
 %configure --disable-static
@@ -66,12 +75,12 @@ the libraries in the yelp-libs package.
 # libtool doesn't make this easy, so we do it the hard way
 sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0 /g' -e 's/    if test "$export_dynamic" = yes && test -n "$export_dynamic_flag_spec"; then/      func_append compile_command " -Wl,-O1,--as-needed"\n      func_append finalize_command " -Wl,-O1,--as-needed"\n\0/' libtool
 
-make %{?_smp_mflags} V=1
+make %{?_smp_mflags}
 
 %install
-%make_install
+make install DESTDIR=$RPM_BUILD_ROOT
 
-find $RPM_BUILD_ROOT%{_libdir} -name '*.la' -delete
+rm $RPM_BUILD_ROOT%{_libdir}/libyelp.la
 
 %find_lang %{name}
 
@@ -99,45 +108,23 @@ gtk-update-icon-cache %{_datadir}icons/hicolor &> /dev/null || :
 %postun libs -p /sbin/ldconfig
 
 %files -f %{name}.lang
-%doc AUTHORS NEWS README
-%license COPYING
+%doc AUTHORS COPYING MAINTAINERS NEWS README
 %{_bindir}/*
 %{_datadir}/applications/yelp.desktop
+%{_datadir}/yelp
 %{_datadir}/glib-2.0/schemas/org.gnome.yelp.gschema.xml
-%{_datadir}/metainfo/yelp.appdata.xml
-%{_datadir}/yelp/
 %{_datadir}/yelp-xsl/xslt/common/domains/yelp.xml
 
 %files libs
 %{_libdir}/libyelp.so.*
-%dir %{_libdir}/yelp
-%dir %{_libdir}/yelp/web-extensions
-%{_libdir}/yelp/web-extensions/libyelpwebextension.so
 
 %files devel
 %{_libdir}/libyelp.so
 %{_includedir}/libyelp
-%{_datadir}/gtk-doc
+%{_datadir}/gtk-doc/html/libyelp
 
 
 %changelog
-* Wed Jun 06 2018 Richard Hughes <rhughes@redhat.com> - 2:3.28.1-1
-- Update to 3.28.1
-- Resolves: #1569802
-
-* Tue Mar  7 2017 Matthias Clasen <mclasen@redhat.com> - 1:3.22.0-1
-- Rebase to 3.22.0
-  Resolves: rhbz#1387062
-
-* Mon May 18 2015 David King <dking@redhat.com> - 1:3.14.2-1
-- Update to 3.14.2 (#1174713)
-
-* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1:3.8.1-7
-- Mass rebuild 2014-01-24
-
-* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1:3.8.1-6
-- Mass rebuild 2013-12-27
-
 * Fri Jun 21 2013 Matthias Clasen <mclasen@redhat.com> - 1:3.8.1-5
 - Trim %%changelog
 

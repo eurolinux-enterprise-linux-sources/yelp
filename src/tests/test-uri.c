@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -33,8 +35,7 @@ static void
 print_uri (gchar *orig, YelpUri *uri, GOutputStream *stream)
 {
     GFile *file;
-    const gchar *type = NULL;
-    gchar *tmp, **tmpv, *out;
+    gchar *type = NULL, *tmp, **tmpv, *out;
 
     g_output_stream_write (stream, orig, strlen (orig), NULL, NULL);
     g_output_stream_write (stream, "\n", 1, NULL, NULL);
@@ -75,9 +76,6 @@ print_uri (gchar *orig, YelpUri *uri, GOutputStream *stream)
         break;
     case YELP_URI_DOCUMENT_TYPE_UNRESOLVED:
         type = "UNRESOLVED";
-        break;
-    default:
-        g_assert_not_reached ();
         break;
     }
 
@@ -227,6 +225,7 @@ main (int argc, char **argv)
     YelpUri *parent = NULL;
     YelpUri *uri = NULL;
 
+    g_type_init ();
     g_log_set_always_fatal (G_LOG_LEVEL_ERROR | G_LOG_LEVEL_CRITICAL);
         
     if (argc < 2) {

@@ -2,128 +2,82 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-<title>yelp-error: Yelp Reference Manual</title>
-<meta name="generator" content="DocBook XSL Stylesheets Vsnapshot">
+<title>yelp-error</title>
+<meta name="generator" content="DocBook XSL Stylesheets V1.75.2">
 <link rel="home" href="index.html" title="Yelp Reference Manual">
 <link rel="up" href="ch01.html" title="API Reference">
 <link rel="prev" href="YelpSettings.html" title="YelpSettings">
 <link rel="next" href="object-tree.html" title="Object Hierarchy">
-<meta name="generator" content="GTK-Doc V1.28 (XML mode)">
+<meta name="generator" content="GTK-Doc V1.15 (XML mode)">
 <link rel="stylesheet" href="style.css" type="text/css">
 </head>
 <body bgcolor="white" text="black" link="#0000FF" vlink="#840084" alink="#0000FF">
-<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="5"><tr valign="middle">
-<td width="100%" align="left" class="shortcuts">
-<a href="#" class="shortcut">Top</a><span id="nav_description">  <span class="dim">|</span> 
-                  <a href="#libyelp-yelp-error.description" class="shortcut">Description</a></span>
-</td>
-<td><a accesskey="h" href="index.html"><img src="home.png" width="16" height="16" border="0" alt="Home"></a></td>
-<td><a accesskey="u" href="ch01.html"><img src="up.png" width="16" height="16" border="0" alt="Up"></a></td>
-<td><a accesskey="p" href="YelpSettings.html"><img src="left.png" width="16" height="16" border="0" alt="Prev"></a></td>
-<td><a accesskey="n" href="object-tree.html"><img src="right.png" width="16" height="16" border="0" alt="Next"></a></td>
-</tr></table>
-<div class="refentry">
+<table class="navigation" id="top" width="100%" summary="Navigation header" cellpadding="2" cellspacing="2">
+<tr valign="middle">
+<td><a accesskey="p" href="YelpSettings.html"><img src="left.png" width="24" height="24" border="0" alt="Prev"></a></td>
+<td><a accesskey="u" href="ch01.html"><img src="up.png" width="24" height="24" border="0" alt="Up"></a></td>
+<td><a accesskey="h" href="index.html"><img src="home.png" width="24" height="24" border="0" alt="Home"></a></td>
+<th width="100%" align="center">Yelp Reference Manual</th>
+<td><a accesskey="n" href="object-tree.html"><img src="right.png" width="24" height="24" border="0" alt="Next"></a></td>
+</tr>
+<tr><td colspan="5" class="shortcuts">
+<a href="#libyelp-yelp-error.synopsis" class="shortcut">Top</a>
+                   | 
+                  <a href="#libyelp-yelp-error.description" class="shortcut">Description</a>
+</td></tr>
+</table>
+<div class="refentry" title="yelp-error">
 <a name="libyelp-yelp-error"></a><div class="titlepage"></div>
 <div class="refnamediv"><table width="100%"><tr>
 <td valign="top">
 <h2><span class="refentrytitle"><a name="libyelp-yelp-error.top_of_page"></a>yelp-error</span></h2>
 <p>yelp-error</p>
 </td>
-<td class="gallery_image" valign="top" align="right"></td>
+<td valign="top" align="right"></td>
 </tr></table></div>
-<div class="refsect1">
-<a name="libyelp-yelp-error.functions"></a><h2>Functions</h2>
-<div class="informaltable"><table class="informaltable" width="100%" border="0">
-<colgroup>
-<col width="150px" class="functions_return">
-<col class="functions_name">
-</colgroup>
-<tbody><tr>
-<td class="function_type">
-<a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="returnvalue">GError</span></a> *
-</td>
-<td class="function_name">
-<a href="libyelp-yelp-error.html#yelp-error-copy">yelp_error_copy</a> <span class="c_punctuation">()</span>
-</td>
-</tr></tbody>
-</table></div>
+<div class="refsynopsisdiv" title="Synopsis">
+<a name="libyelp-yelp-error.synopsis"></a><h2>Synopsis</h2>
+<pre class="synopsis">#define             <a href="libyelp-yelp-error.html#YELP-ERROR:CAPS">YELP_ERROR</a>
+enum                <a href="libyelp-yelp-error.html#YelpError">YelpError</a>;
+<span class="returnvalue">GError</span> *            <a href="libyelp-yelp-error.html#yelp-error-copy">yelp_error_copy</a>                     (<em class="parameter"><code><span class="type">GError</span> *error</code></em>);
+const <span class="returnvalue">gchar</span> *       <a href="libyelp-yelp-error.html#yelp-error-get-title">yelp_error_get_title</a>                (<em class="parameter"><code><span class="type">GError</span> *error</code></em>);
+</pre>
 </div>
-<div class="refsect1">
-<a name="libyelp-yelp-error.other"></a><h2>Types and Values</h2>
-<div class="informaltable"><table class="informaltable" width="100%" border="0">
-<colgroup>
-<col width="150px" class="name">
-<col class="description">
-</colgroup>
-<tbody>
-<tr>
-<td class="define_keyword">#define</td>
-<td class="function_name"><a href="libyelp-yelp-error.html#YELP-ERROR:CAPS">YELP_ERROR</a></td>
-</tr>
-<tr>
-<td class="datatype_keyword">enum</td>
-<td class="function_name"><a href="libyelp-yelp-error.html#YelpError">YelpError</a></td>
-</tr>
-</tbody>
-</table></div>
-</div>
-<div class="refsect1">
+<div class="refsect1" title="Description">
 <a name="libyelp-yelp-error.description"></a><h2>Description</h2>
 </div>
-<div class="refsect1">
-<a name="libyelp-yelp-error.functions_details"></a><h2>Functions</h2>
-<div class="refsect2">
-<a name="yelp-error-copy"></a><h3>yelp_error_copy ()</h3>
-<pre class="programlisting"><a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="returnvalue">GError</span></a> *
-yelp_error_copy (<em class="parameter"><code><a href="/usr/share/gtk-doc/html/glib/glib-Error-Reporting.html#GError"><span class="type">GError</span></a> *error</code></em>);</pre>
-</div>
-</div>
-<div class="refsect1">
-<a name="libyelp-yelp-error.other_details"></a><h2>Types and Values</h2>
-<div class="refsect2">
+<div class="refsect1" title="Details">
+<a name="libyelp-yelp-error.details"></a><h2>Details</h2>
+<div class="refsect2" title="YELP_ERROR">
 <a name="YELP-ERROR:CAPS"></a><h3>YELP_ERROR</h3>
 <pre class="programlisting">#define YELP_ERROR g_quark_from_static_string ("yelp-error")
 </pre>
 </div>
 <hr>
-<div class="refsect2">
+<div class="refsect2" title="enum YelpError">
 <a name="YelpError"></a><h3>enum YelpError</h3>
-<div class="refsect3">
-<a name="YelpError.members"></a><h4>Members</h4>
-<div class="informaltable"><table class="informaltable" width="100%" border="0">
-<colgroup>
-<col width="300px" class="enum_members_name">
-<col class="enum_members_description">
-<col width="200px" class="enum_members_annotations">
-</colgroup>
-<tbody>
-<tr>
-<td class="enum_member_name"><p><a name="YELP-ERROR-NOT-FOUND:CAPS"></a>YELP_ERROR_NOT_FOUND</p></td>
-<td> </td>
-<td> </td>
-</tr>
-<tr>
-<td class="enum_member_name"><p><a name="YELP-ERROR-CANT-READ:CAPS"></a>YELP_ERROR_CANT_READ</p></td>
-<td> </td>
-<td> </td>
-</tr>
-<tr>
-<td class="enum_member_name"><p><a name="YELP-ERROR-PROCESSING:CAPS"></a>YELP_ERROR_PROCESSING</p></td>
-<td> </td>
-<td> </td>
-</tr>
-<tr>
-<td class="enum_member_name"><p><a name="YELP-ERROR-UNKNOWN:CAPS"></a>YELP_ERROR_UNKNOWN</p></td>
-<td> </td>
-<td> </td>
-</tr>
-</tbody>
-</table></div>
+<pre class="programlisting">typedef enum {
+    YELP_ERROR_NOT_FOUND,
+    YELP_ERROR_CANT_READ,
+    YELP_ERROR_PROCESSING,
+    YELP_ERROR_UNKNOWN
+} YelpError;
+</pre>
 </div>
+<hr>
+<div class="refsect2" title="yelp_error_copy ()">
+<a name="yelp-error-copy"></a><h3>yelp_error_copy ()</h3>
+<pre class="programlisting"><span class="returnvalue">GError</span> *            yelp_error_copy                     (<em class="parameter"><code><span class="type">GError</span> *error</code></em>);</pre>
+</div>
+<hr>
+<div class="refsect2" title="yelp_error_get_title ()">
+<a name="yelp-error-get-title"></a><h3>yelp_error_get_title ()</h3>
+<pre class="programlisting">const <span class="returnvalue">gchar</span> *       yelp_error_get_title                (<em class="parameter"><code><span class="type">GError</span> *error</code></em>);</pre>
 </div>
 </div>
 </div>
 <div class="footer">
-<hr>Generated by GTK-Doc V1.28</div>
+<hr>
+          Generated by GTK-Doc V1.15</div>
 </body>
 </html>

@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -78,7 +80,6 @@ typedef enum {
     YELP_SETTINGS_NUM_ICONS
 } YelpSettingsIcon;
 
-GType               yelp_settings_get_type             (void);
 YelpSettings *      yelp_settings_get_default          (void);
 
 gchar *             yelp_settings_get_color            (YelpSettings       *settings,

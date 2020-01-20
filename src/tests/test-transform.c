@@ -13,7 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc.,  59 Temple Place - Suite 330, Cambridge, MA 02139, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -114,8 +115,10 @@ main (gint argc, gchar **argv)
     xmlDocPtr doc;
     YelpTransform *transform;
     gchar **params;
-    const gchar *stylesheet;
+    gchar *stylesheet;
     gchar *file;
+
+    g_type_init ();
 
     context = g_option_context_new ("[STYLESHEET] FILE");
     g_option_context_add_main_entries (context, options, NULL);
@@ -135,12 +138,12 @@ main (gint argc, gchar **argv)
     }
 
     params = g_new0 (gchar *, 7);
-    params[0] = g_strdup ("db.chunk.extension");
-    params[1] = g_strdup ("\"\"");
-    params[2] = g_strdup ("db.chunk.info_basename");
-    params[3] = g_strdup ("\"x-yelp-titlepage\"");
-    params[4] = g_strdup ("db.chunk.max_depth");
-    params[5] = g_strdup ("2");
+    params[0] = "db.chunk.extension";
+    params[1] = "\"\"";
+    params[2] = "db.chunk.info_basename";
+    params[3] = "\"x-yelp-titlepage\"";
+    params[4] = "db.chunk.max_depth";
+    params[5] = "2";
     params[6] = NULL;
 
     transform = yelp_transform_new (stylesheet);
@@ -160,7 +163,7 @@ main (gint argc, gchar **argv)
     xmlXIncludeProcessFlags (doc,
 			     XML_PARSE_DTDLOAD | XML_PARSE_NOCDATA |
 			     XML_PARSE_NOENT   | XML_PARSE_NONET   );
-    if (!yelp_transform_start (transform, doc, NULL, (const gchar **) params))
+    if (!yelp_transform_start (transform, doc, params, NULL))
 	return 1;
 
     if (random_timeout) {

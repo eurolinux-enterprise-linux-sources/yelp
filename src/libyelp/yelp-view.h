@@ -1,7 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /*
  * Copyright (C) 2009 Shaun McCance <shaunm@gnome.org>
- * Copyright (C) 2014 Igalia S.L.
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -14,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -23,7 +24,7 @@
 #define __YELP_VIEW_H__
 
 #include <gtk/gtk.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 #include "yelp-document.h"
 #include "yelp-uri.h"
@@ -37,8 +38,8 @@ G_BEGIN_DECLS
 #define YELP_IS_VIEW_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), YELP_TYPE_VIEW))
 #define YELP_VIEW_GET_CLASS(o)    (G_TYPE_INSTANCE_GET_CLASS ((o), YELP_TYPE_VIEW, YelpViewClass))
 
-typedef struct _YelpView         YelpView;
-typedef struct _YelpViewClass    YelpViewClass;
+typedef struct _YelpView       YelpView;
+typedef struct _YelpViewClass  YelpViewClass;
 typedef gboolean (* YelpViewActionValidFunc) (YelpView *view, GtkAction *action, gchar *uri, gpointer data);
 
 struct _YelpView
@@ -62,6 +63,7 @@ typedef enum {
 } YelpViewState;
 
 GType              yelp_view_get_type             (void);
+GType              yelp_view_state_get_type       (void);
 
 GtkWidget *        yelp_view_new                  (void);
 void               yelp_view_load                 (YelpView                *view,
@@ -72,9 +74,7 @@ void               yelp_view_load_document        (YelpView                *view
                                                    YelpUri                 *uri,
                                                    YelpDocument            *document);
 YelpDocument *     yelp_view_get_document         (YelpView                *view);
-
-void               yelp_view_register_actions     (YelpView                *view,
-                                                   GActionMap              *map);
+GtkActionGroup *   yelp_view_get_action_group     (YelpView                *view);
 
 void               yelp_view_add_link_action      (YelpView                *view,
                                                    GtkAction               *action,

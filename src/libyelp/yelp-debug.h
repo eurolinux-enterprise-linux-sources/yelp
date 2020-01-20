@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #ifndef __YELP_DEBUG_H__
@@ -21,7 +23,6 @@
 
 G_BEGIN_DECLS
 
-#include <unistd.h>
 #include <glib.h>
 
 typedef enum {
@@ -36,7 +37,7 @@ typedef enum {
 	DB_ALL        = 1 << 8
 } YelpDebugEnums;
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ < 199901L
+#if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
 #  define __func__ __FUNCTION__
 # else
@@ -47,13 +48,13 @@ typedef enum {
 /* __VA_ARGS__ is C99 compliant but may not work on older versions of cpp, 
  * so we provide a fallback */
 #ifdef YELP_DEBUG
-# if defined(__STDC_VERSION__) && __STDC_VERSION__ < 199901L
+# if __STDC_VERSION__ < 199901L
 #  define debug_print(format, args...) yelp_debug (__FILE__, __LINE__, __func__, format, args)
 # else
 #  define debug_print(format, ...) yelp_debug (__FILE__, __LINE__, __func__, format, __VA_ARGS__)
 # endif
 #else
-# if defined(__STDC_VERSION__) && __STDC_VERSION__ < 199901L
+# if __STDC_VERSION__ < 199901L
 #  define debug_print(format, args...)
 # else
 #  define debug_print(format, ...)
@@ -66,7 +67,6 @@ typedef enum {
 # define d(x)
 #endif
 
-G_GNUC_INTERNAL
 void yelp_debug (const gchar *file, guint line, 
                  const gchar *function, guint flags, const gchar *format, ...);
 

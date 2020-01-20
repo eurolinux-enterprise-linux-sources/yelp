@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance <shaunm@gnome.org>
  */
@@ -26,13 +28,10 @@
 
 typedef struct _YelpManParser YelpManParser;
 
-G_GNUC_INTERNAL
 YelpManParser *     yelp_man_parser_new         (void);
-G_GNUC_INTERNAL
 xmlDocPtr           yelp_man_parser_parse_file  (YelpManParser   *parser,
                                                  gchar           *path,
                                                  GError         **error);
-G_GNUC_INTERNAL
 void                yelp_man_parser_free        (YelpManParser   *parser);
 
 #endif /* __YELP_MAN_PARSER_H__ */

@@ -13,7 +13,9 @@
  * General Public License for more details.
  *
  * You should have received a copy of the GNU General Public
- * License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ * License along with this program; if not, write to the
+ * Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  *
  * Author: Shaun McCance  <shaunm@gnome.org>
  */
@@ -42,7 +44,6 @@ struct _YelpTransformClass {
     GObjectClass  parent_class;
 };
 
-GType            yelp_transform_get_type       (void);
 YelpTransform  * yelp_transform_new            (const gchar         *stylesheet);
 gboolean         yelp_transform_start          (YelpTransform       *transform,
                                                 xmlDocPtr            document,
