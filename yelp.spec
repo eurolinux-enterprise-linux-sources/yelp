@@ -4,7 +4,7 @@ Summary: Help browser for the GNOME desktop
 Name: yelp
 Epoch: 1
 Version: 3.8.1
-Release: 5%{?dist}
+Release: 7%{?dist}
 #VCS: git:git://git.gnome.org/yelp
 Source: http://download.gnome.org/sources/yelp/3.8/%{name}-%{version}.tar.xz
 
@@ -125,6 +125,12 @@ gtk-update-icon-cache %{_datadir}icons/hicolor &> /dev/null || :
 
 
 %changelog
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1:3.8.1-7
+- Mass rebuild 2014-01-24
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1:3.8.1-6
+- Mass rebuild 2013-12-27
+
 * Fri Jun 21 2013 Matthias Clasen <mclasen@redhat.com> - 1:3.8.1-5
 - Trim %%changelog
 
