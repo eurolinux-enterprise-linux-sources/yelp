@@ -51,6 +51,7 @@ struct _Request {
     GCancellable         *cancellable;
     YelpDocumentCallback  callback;
     gpointer              user_data;
+    GDestroyNotify        notify;
     GError               *error;
 
     gint                  idle_funcs;
@@ -113,7 +114,8 @@ static gboolean       document_request_page     (YelpDocument         *document,
                                                  const gchar          *page_id,
                                                  GCancellable         *cancellable,
                                                  YelpDocumentCallback  callback,
-                                                 gpointer              user_data);
+                                                 gpointer              user_data,
+                                                 GDestroyNotify        notify);
 static gboolean       document_indexed          (YelpDocument         *document);
 static const gchar *  document_read_contents    (YelpDocument         *document,
                                                  const gchar          *page_id);
@@ -275,8 +277,8 @@ yelp_document_class_init (YelpDocumentClass *klass)
     g_object_class_install_property (object_class,
                                      PROP_INDEXED,
                                      g_param_spec_boolean ("indexed",
-                                                           N_("Indexed"),
-                                                           N_("Whether the document content has been indexed"),
+                                                           "Indexed",
+                                                           "Whether the document content has been indexed",
                                                            FALSE,
                                                            G_PARAM_CONSTRUCT | G_PARAM_READWRITE |
                                                            G_PARAM_STATIC_STRINGS));
@@ -284,8 +286,8 @@ yelp_document_class_init (YelpDocumentClass *klass)
     g_object_class_install_property (object_class,
                                      PROP_URI,
                                      g_param_spec_object ("document-uri",
-                                                          N_("Document URI"),
-                                                          N_("The URI which identifies the document"),
+                                                          "Document URI",
+                                                          "The URI which identifies the document",
                                                           YELP_TYPE_URI,
                                                           G_PARAM_CONSTRUCT_ONLY | G_PARAM_READWRITE |
                                                           G_PARAM_STATIC_STRINGS));
@@ -810,7 +812,8 @@ yelp_document_request_page (YelpDocument         *document,
 			    const gchar          *page_id,
 			    GCancellable         *cancellable,
 			    YelpDocumentCallback  callback,
-			    gpointer              user_data)
+			    gpointer              user_data,
+			    GDestroyNotify        notify)
 {
     g_return_val_if_fail (YELP_IS_DOCUMENT (document), FALSE);
     g_return_val_if_fail (YELP_DOCUMENT_GET_CLASS (document)->request_page != NULL, FALSE);
@@ -821,7 +824,8 @@ yelp_document_request_page (YelpDocument         *document,
 							     page_id,
 							     cancellable,
 							     callback,
-							     user_data);
+							     user_data,
+							     notify);
 }
 
 static gboolean
@@ -829,7 +833,8 @@ document_request_page (YelpDocument         *document,
 		       const gchar          *page_id,
 		       GCancellable         *cancellable,
 		       YelpDocumentCallback  callback,
-		       gpointer              user_data)
+		       gpointer              user_data,
+		       GDestroyNotify        notify)
 {
     Request *request;
     gchar *real_id;
@@ -855,6 +860,7 @@ document_request_page (YelpDocument         *document,
 
     request->callback = callback;
     request->user_data = user_data;
+    request->notify = notify;
     request->idle_funcs = 0;
 
     g_mutex_lock (&document->priv->mutex);
@@ -1510,6 +1516,9 @@ request_try_free (Request *request)
 static void
 request_free (Request *request)
 {
+    if (request->notify)
+        request->notify (request->user_data);
+
     g_object_unref (request->document);
     g_free (request->page_id);
     g_object_unref (request->cancellable);

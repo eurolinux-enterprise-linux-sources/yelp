@@ -2,6 +2,7 @@
 # Please keep this file sorted alphabetically.
 [encoding: UTF-8]
 data/domains/yelp.pot
+data/yelp.appdata.xml.in
 libyelp/yelp-bz2-decompressor.c
 libyelp/yelp-debug.c
 libyelp/yelp-docbook-document.c
@@ -14,9 +15,7 @@ libyelp/yelp-magic-decompressor.c
 libyelp/yelp-mallard-document.c
 libyelp/yelp-man-document.c
 libyelp/yelp-search-entry.c
-libyelp/yelp-settings.c
 libyelp/yelp-simple-document.c
-libyelp/yelp-sqlite-storage.c
 libyelp/yelp-storage.c
 libyelp/yelp-transform.c
 libyelp/yelp-uri.c

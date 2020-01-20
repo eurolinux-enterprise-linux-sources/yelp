@@ -208,8 +208,8 @@ yelp_window_class_init (YelpWindowClass *klass)
     g_object_class_install_property (object_class,
                                      PROP_APPLICATION,
                                      g_param_spec_object ("application",
-							  _("Application"),
-							  _("A YelpApplication instance that controls this window"),
+							  "Application",
+							  "A YelpApplication instance that controls this window",
                                                           YELP_TYPE_APPLICATION,
                                                           G_PARAM_CONSTRUCT_ONLY |
 							  G_PARAM_READWRITE | G_PARAM_STATIC_NAME |
@@ -462,7 +462,7 @@ window_construct (YelpWindow *window)
                                      ".yelp-find-frame {"
                                      "    background-color: @theme_base_color;"
                                      "    padding: 6px;"
-                                     "    border-color: shade (@notebook_tab_gradient_b, 0.80);"
+                                     "    border-color: @borders;"
                                      "    border-radius: 0 0 3px 3px;"
                                      "    border-width: 0 1px 1px 1px;"
                                      "    border-style: solid;"
@@ -470,6 +470,7 @@ window_construct (YelpWindow *window)
                                      -1, NULL);
     priv->find_bar = gtk_revealer_new ();
     frame = gtk_frame_new (NULL);
+    gtk_frame_set_shadow_type (GTK_FRAME (frame), GTK_SHADOW_NONE);
     gtk_style_context_add_class (gtk_widget_get_style_context (frame),
                                  "yelp-find-frame");
     gtk_style_context_add_provider (gtk_widget_get_style_context (frame),

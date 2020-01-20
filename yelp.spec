@@ -1,8 +1,8 @@
 %global _changelog_trimtime %(date +%s -d "1 year ago")
 
 Name:          yelp
-Epoch:         1
-Version:       3.22.0
+Epoch:         2
+Version:       3.28.1
 Release:       1%{?dist}
 Summary:       Help browser for the GNOME desktop
 
@@ -10,7 +10,7 @@ Group:         Applications/System
 License:       GPLv2+
 URL:           https://wiki.gnome.org/Apps/Yelp
 #VCS:          git:git://git.gnome.org/yelp
-Source:        https://download.gnome.org/sources/%{name}/3.22/%{name}-%{version}.tar.xz
+Source:        https://download.gnome.org/sources/%{name}/3.28/%{name}-%{version}.tar.xz
 
 # https://bugzilla.gnome.org/show_bug.cgi?id=687960
 Patch1:        0001-Center-new-windows.patch
@@ -71,46 +71,6 @@ make %{?_smp_mflags} V=1
 %install
 %make_install
 
-# Register as an application to be visible in the software center
-#
-# NOTE: It would be *awesome* if this file was maintained by the upstream
-# project, translated and installed into the right place during `make install`.
-#
-# See http://www.freedesktop.org/software/appstream/docs/ for more details.
-#
-mkdir -p $RPM_BUILD_ROOT%{_datadir}/appdata
-cat > $RPM_BUILD_ROOT%{_datadir}/appdata/%{name}.appdata.xml <<EOF
-<?xml version="1.0" encoding="UTF-8"?>
-<!-- Copyright 2014 Richard Hughes <richard@hughsie.com> -->
-<!--
-BugReportURL: https://bugzilla.gnome.org/show_bug.cgi?id=722763
-SentUpstream: 2014-09-17
--->
-<application>
-  <id type="desktop">yelp.desktop</id>
-  <metadata_license>CC0-1.0</metadata_license>
-  <description>
-    <p>
-      Yelp is a viewer and framework for documentation on the Linux desktop.
-      It is used heavily by the GNOME desktop environment, and its tools serve as
-      the reference implementation for the Mallard help format.
-      Yelp supports DocBook, Mallard, HTML, man, and info documents.
-    </p>
-    <p>
-      Yelp development has led to the development of various tools, and the Mallard
-      and DocBook transformations live in standalone XSLT module.
-      All of these are under the umbrella name Yelp.
-    </p>
-  </description>
-  <screenshots>
-    <screenshot type="default">https://raw.githubusercontent.com/hughsie/fedora-appstream/master/screenshots-extra/yelp/a.png</screenshot>
-    <screenshot>https://raw.githubusercontent.com/hughsie/fedora-appstream/master/screenshots-extra/yelp/b.png</screenshot>
-  </screenshots>
-  <url type="homepage">https://projects.gnome.org/yelp/</url>
-  <updatecontact>gnome-doc-devel-list@gnome.org</updatecontact>
-</application>
-EOF
-
 find $RPM_BUILD_ROOT%{_libdir} -name '*.la' -delete
 
 %find_lang %{name}
@@ -142,14 +102,16 @@ gtk-update-icon-cache %{_datadir}icons/hicolor &> /dev/null || :
 %doc AUTHORS NEWS README
 %license COPYING
 %{_bindir}/*
-%{_datadir}/appdata/%{name}.appdata.xml
 %{_datadir}/applications/yelp.desktop
-%{_datadir}/yelp
 %{_datadir}/glib-2.0/schemas/org.gnome.yelp.gschema.xml
+%{_datadir}/metainfo/yelp.appdata.xml
+%{_datadir}/yelp/
 %{_datadir}/yelp-xsl/xslt/common/domains/yelp.xml
 
 %files libs
 %{_libdir}/libyelp.so.*
+%dir %{_libdir}/yelp
+%dir %{_libdir}/yelp/web-extensions
 %{_libdir}/yelp/web-extensions/libyelpwebextension.so
 
 %files devel
@@ -159,6 +121,10 @@ gtk-update-icon-cache %{_datadir}icons/hicolor &> /dev/null || :
 
 
 %changelog
+* Wed Jun 06 2018 Richard Hughes <rhughes@redhat.com> - 2:3.28.1-1
+- Update to 3.28.1
+- Resolves: #1569802
+
 * Tue Mar  7 2017 Matthias Clasen <mclasen@redhat.com> - 1:3.22.0-1
 - Rebase to 3.22.0
   Resolves: rhbz#1387062
